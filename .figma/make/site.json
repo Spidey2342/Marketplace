@@ -1,0 +1,10 @@
+{
+  "description": "Engage in a vibrant multiplayer 3D game where Ghanaian youth run virtual market stalls, tackle real-life business challenges, and compete with friends.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
