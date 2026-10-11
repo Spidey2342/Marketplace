@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import AvatarGroupScreen from "@/screens/AvatarGroupScreen"
 import ChallengeScreen from "@/screens/ChallengeScreen"
 import HomeScreen from "@/screens/HomeScreen"
+import LeaderboardScreen from "@/screens/LeaderboardScreen"
 import ResultsScreen from "@/screens/ResultsScreen"
 import SetupScreen from "@/screens/SetupScreen"
 import TownScreen from "@/screens/TownScreen"
@@ -29,6 +30,7 @@ export default function App() {
   if (screen === "town") return <TownScreen go={go} />
   if (screen === "results") return <ResultsScreen go={go} />
   if (screen === "challenge") return <ChallengeScreen go={go} />
+  if (screen === "leaderboard") return <LeaderboardScreen go={go} />
   return <HomeScreen go={go} />
 }
 
@@ -43,7 +45,8 @@ function readDevScreen(): Screen | null {
       screen === "setup" ||
       screen === "town" ||
       screen === "results" ||
-      screen === "challenge"
+      screen === "challenge" ||
+      screen === "leaderboard"
     ) {
       return screen
     }

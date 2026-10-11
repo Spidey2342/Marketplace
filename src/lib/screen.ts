@@ -5,5 +5,6 @@ export type Screen =
   | "town"
   | "results"
   | "challenge"
+  | "leaderboard"
 
 export type Go = (screen: Screen) => void

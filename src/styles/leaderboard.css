@@ -1,0 +1,212 @@
+.leaderboard-screen {
+  height: 100svh;
+  max-height: 100svh;
+}
+
+.leaderboard-screen .screen-layer {
+  height: 100%;
+  min-height: 0;
+}
+
+.leaderboard-screen .content-scroll {
+  min-height: 0;
+}
+
+.leaderboard-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 16px 24px;
+}
+
+.week-card,
+.pin-card,
+.hustle-card,
+.rank-list li {
+  border: 3px solid var(--line);
+  border-radius: 16px;
+  background: var(--paper);
+}
+
+.week-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+}
+
+.week-card > span {
+  font-family: "Baloo 2", sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.pin-card {
+  display: grid;
+  grid-template-columns: 48px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  background: #fff4bf;
+}
+
+.pin-card p {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 16px;
+}
+
+.pin-card strong,
+.rank-list strong,
+.hustle-row strong {
+  display: block;
+  font-family: "Baloo 2", sans-serif;
+  font-size: 18px;
+}
+
+.pin-card span,
+.pin-card em,
+.hustle-row em {
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.pin-card em {
+  color: var(--green);
+}
+
+.rank-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rank-list li {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 56px;
+  padding: 8px 10px;
+}
+
+.rank-list li.is-you {
+  background: #fff4bf;
+}
+
+.rank-list strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rank-mark {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  font-family: "Baloo 2", sans-serif;
+  font-size: 18px;
+  background: var(--cream);
+}
+
+.medal-1 {
+  background: var(--yellow);
+}
+
+.medal-2 {
+  background: var(--paper);
+}
+
+.medal-3 {
+  background: var(--orange);
+  color: var(--paper);
+}
+
+.pts {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.move {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  min-width: 36px;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.move i {
+  width: 0;
+  height: 0;
+  border-right: 6px solid transparent;
+  border-left: 6px solid transparent;
+}
+
+.move.up {
+  color: var(--green);
+}
+
+.move.up i {
+  border-bottom: 8px solid var(--green);
+}
+
+.move.down {
+  color: var(--red);
+}
+
+.move.down i {
+  border-top: 8px solid var(--red);
+}
+
+.move.flat {
+  color: var(--muted);
+}
+
+.hustle-card {
+  padding: 12px;
+}
+
+.hustle-card h2 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.hustle-row {
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+}
+
+.hustle-row > span {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--muted);
+}
+
+.leaderboard-screen .sticky-action {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 760px) {
+  .leaderboard-screen {
+    height: calc(100svh - 48px);
+    max-height: calc(100svh - 48px);
+  }
+
+  .leaderboard-content {
+    width: min(100%, 820px);
+    margin: auto;
+  }
+}

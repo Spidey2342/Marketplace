@@ -130,6 +130,13 @@ export function contributionForProfit(profit: number): number {
   return Math.max(0, profit) * POINTS_PER_PROFIT_COIN
 }
 
+export function playerWeekPoints(
+  profitContribution: number,
+  challengesCompleted: number,
+): number {
+  return profitContribution + challengesCompleted * POINTS_PER_CHALLENGE
+}
+
 export function timeUntilSunday(now: number): { days: number; hours: number } {
   const end = new Date(now)
   const day = end.getDay()
