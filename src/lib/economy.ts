@@ -20,6 +20,7 @@ export const REPUTATION_PER_SALE = 1
 export const POINTS_PER_PROFIT_COIN = 1
 export const POINTS_PER_CHALLENGE = 10
 export const URGENT_TIMER_SECONDS = 30
+export const BUBBLE_MS = 3_000
 export const HOUR_MS = 60 * 60 * 1000
 
 export type PriceVerdict = "Too low" | "Good price" | "Too high"

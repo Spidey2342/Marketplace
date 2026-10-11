@@ -57,6 +57,9 @@ export type GameState = {
   challengesCompleted: number
   showResults: boolean
   shortRound: boolean
+  joystick: { x: number; y: number }
+  speech: string | null
+  emote: string | null
 }
 
 type Action =
@@ -67,6 +70,10 @@ type Action =
   | { type: "endRound"; now: number }
   | { type: "acknowledgeResults" }
   | { type: "setProof"; proof: ProofChoice }
+  | { type: "setJoystick"; x: number; y: number }
+  | { type: "setSpeech"; text: string }
+  | { type: "setEmote"; label: string }
+  | { type: "clearBubble" }
 
 const STORAGE_KEY = "market-street"
 
@@ -95,6 +102,9 @@ function freshState(): GameState {
     challengesCompleted: 0,
     showResults: false,
     shortRound: readShortRound(),
+    joystick: { x: 0, y: 0 },
+    speech: null,
+    emote: null,
   }
 }
 
@@ -181,7 +191,7 @@ function loadState(): GameState {
 
 function saveState(state: GameState) {
   try {
-    const { showResults, lastSale, ...rest } = state
+    const { showResults, lastSale, joystick, speech, emote, ...rest } = state
     localStorage.setItem(STORAGE_KEY, JSON.stringify(rest))
   } catch {
     // Storage can be blocked. The round still plays in memory.
@@ -321,6 +331,20 @@ function reducer(state: GameState, action: Action): GameState {
       return { ...state, showResults: false }
     case "setProof":
       return { ...state, proof: action.proof }
+    case "setJoystick":
+      return {
+        ...state,
+        joystick: {
+          x: Math.max(-1, Math.min(1, action.x)),
+          y: Math.max(-1, Math.min(1, action.y)),
+        },
+      }
+    case "setSpeech":
+      return { ...state, speech: action.text, emote: null }
+    case "setEmote":
+      return { ...state, emote: action.label, speech: null }
+    case "clearBubble":
+      return { ...state, speech: null, emote: null }
     default:
       return state
   }
@@ -353,7 +377,29 @@ export default function GameProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     saveState(state)
-  }, [state])
+  }, [
+    state.coins,
+    state.avatarName,
+    state.groupId,
+    state.stall,
+    state.roundStatus,
+    state.roundEndsAt,
+    state.lastCustomerAt,
+    state.customers,
+    state.roundRevenue,
+    state.roundStockCost,
+    state.soldOutEarly,
+    state.saleSeq,
+    state.lastResult,
+    state.roundsPlayed,
+    state.reputation,
+    state.proof,
+    state.hasStocked,
+    state.roundProfits,
+    state.weekContribution,
+    state.challengesCompleted,
+    state.shortRound,
+  ])
 
   useEffect(() => {
     if (state.roundStatus !== "running") return

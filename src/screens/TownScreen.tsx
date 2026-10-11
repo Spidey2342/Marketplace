@@ -1,12 +1,12 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import AppFrame from "@/components/scene/AppFrame"
 import MiniMap from "@/components/scene/MiniMap"
 import Icon from "@/components/ui/Icon"
+import Joystick from "@/components/ui/Joystick"
 import Pill from "@/components/ui/Pill"
-import {
-  formatClock,
-  URGENT_TIMER_SECONDS,
-} from "@/lib/economy"
+import { chatPhrases } from "@/data/chat"
+import { emotes } from "@/data/emotes"
+import { BUBBLE_MS, formatClock, URGENT_TIMER_SECONDS } from "@/lib/economy"
 import type { Go } from "@/lib/screen"
 import { useGame } from "@/state/GameProvider"
 
@@ -15,12 +15,36 @@ export default function TownScreen({ go }: { go: Go }) {
   const [now, setNow] = useState(() => Date.now())
   const [chatOpen, setChatOpen] = useState(false)
   const [emotesOpen, setEmotesOpen] = useState(false)
+  const emoteButtonRef = useRef<HTMLButtonElement>(null)
+  const emoteWheelRef = useRef<HTMLDivElement>(null)
   const openItems = state.stall.filter((line) => line.selected).length
+  const activeEmote = emotes.find((emote) => emote.label === state.emote)
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000)
     return () => window.clearInterval(timer)
   }, [])
+
+  useEffect(() => {
+    if (!state.speech && !state.emote) return
+    const timer = window.setTimeout(() => {
+      dispatch({ type: "clearBubble" })
+    }, BUBBLE_MS)
+    return () => window.clearTimeout(timer)
+  }, [state.speech, state.emote, dispatch])
+
+  useEffect(() => {
+    if (!emotesOpen) return
+    function onPointerDown(event: PointerEvent) {
+      const target = event.target
+      if (!(target instanceof Node)) return
+      if (emoteWheelRef.current?.contains(target)) return
+      if (emoteButtonRef.current?.contains(target)) return
+      setEmotesOpen(false)
+    }
+    window.addEventListener("pointerdown", onPointerDown)
+    return () => window.removeEventListener("pointerdown", onPointerDown)
+  }, [emotesOpen])
 
   const remaining =
     state.roundStatus === "running" && state.roundEndsAt
@@ -62,6 +86,13 @@ export default function TownScreen({ go }: { go: Go }) {
 
       <MiniMap />
 
+      {(state.speech || activeEmote) && (
+        <div className="player-bubble">
+          {activeEmote && <Icon name={activeEmote.icon} size={20} />}
+          <span>{state.speech ?? activeEmote?.label}</span>
+        </div>
+      )}
+
       {state.roundStatus === "running" && state.lastSale && (
         <div className="sale-toast" key={state.lastSale.id}>
           <div className="toast-face" />
@@ -89,15 +120,13 @@ export default function TownScreen({ go }: { go: Go }) {
             </button>
           </div>
           <div className="phrase-grid">
-            {[
-              "Fresh stock here!",
-              "Good price!",
-              "Come to my stall",
-              "Nice one!",
-            ].map((phrase) => (
+            {chatPhrases.map((phrase) => (
               <button
                 key={phrase}
-                onClick={() => setChatOpen(false)}
+                onClick={() => {
+                  dispatch({ type: "setSpeech", text: phrase })
+                  setChatOpen(false)
+                }}
                 type="button"
               >
                 {phrase}
@@ -112,30 +141,24 @@ export default function TownScreen({ go }: { go: Go }) {
       )}
 
       {emotesOpen && (
-        <div className="emote-wheel">
-          {["AY", "ƆY", "10", "OK"].map((emote) => (
+        <div className="emote-wheel" ref={emoteWheelRef}>
+          {emotes.map((emote) => (
             <button
-              key={emote}
-              onClick={() => setEmotesOpen(false)}
+              key={emote.id}
+              onClick={() => {
+                dispatch({ type: "setEmote", label: emote.label })
+                setEmotesOpen(false)
+              }}
               type="button"
             >
-              {emote}
+              <Icon name={emote.icon} size={20} />
+              {emote.label}
             </button>
           ))}
         </div>
       )}
 
-      <button
-        aria-label="Move avatar"
-        className="virtual-joystick"
-        type="button"
-      >
-        <span className="joystick-direction joystick-up" />
-        <span className="joystick-direction joystick-right" />
-        <span className="joystick-direction joystick-down" />
-        <span className="joystick-direction joystick-left" />
-        <span className="joystick-knob" />
-      </button>
+      <Joystick />
 
       <div className="town-controls">
         <button
@@ -149,6 +172,7 @@ export default function TownScreen({ go }: { go: Go }) {
         <button
           className="control-button emote-button"
           onClick={() => setEmotesOpen((current) => !current)}
+          ref={emoteButtonRef}
           type="button"
         >
           <Icon name="star" size={27} />
@@ -169,13 +193,6 @@ export default function TownScreen({ go }: { go: Go }) {
           <Icon name="spark" size={20} />
           <span>Weekly challenge</span>
           <Icon name="arrow" size={18} />
-        </button>
-        <button
-          className="finish-demo"
-          onClick={() => dispatch({ type: "endRound", now: Date.now() })}
-          type="button"
-        >
-          Finish round
         </button>
       </div>
     </AppFrame>
