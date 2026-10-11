@@ -83,11 +83,11 @@ export default function ResultsScreen({ go }: { go: Go }) {
           <Button
             className="button-primary"
             icon="arrow"
-            onClick={() => go("setup")}
+            onClick={() => go("reinvest")}
           >
             {profit > 0 ? `REINVEST ¢${profit}` : "REINVEST"}
           </Button>
-          <Button className="button-light" onClick={() => go("setup")}>
+          <Button className="button-light" onClick={() => go("play-again")}>
             PLAY AGAIN
           </Button>
           <button
@@ -96,6 +96,13 @@ export default function ResultsScreen({ go }: { go: Go }) {
             type="button"
           >
             View weekly challenge
+          </button>
+          <button
+            className="text-button dark"
+            onClick={() => go("rankings")}
+            type="button"
+          >
+            See group rankings
           </button>
         </div>
       </div>

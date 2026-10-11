@@ -137,6 +137,17 @@ export function playerWeekPoints(
   return profitContribution + challengesCompleted * POINTS_PER_CHALLENGE
 }
 
+export const DEFAULT_ROUND_PROFIT = 40
+
+export function roundsToGo(shortfall: number, profits: number[]): number {
+  const wins = profits.filter((profit) => profit > 0)
+  const average = wins.length
+    ? wins.reduce((sum, profit) => sum + profit, 0) / wins.length
+    : DEFAULT_ROUND_PROFIT
+  const pace = average > 0 ? average : DEFAULT_ROUND_PROFIT
+  return Math.max(1, Math.ceil(shortfall / pace))
+}
+
 export function timeUntilSunday(now: number): { days: number; hours: number } {
   const end = new Date(now)
   const day = end.getDay()

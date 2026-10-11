@@ -54,7 +54,7 @@ export default function AvatarGroupScreen({ go }: { go: Go }) {
           <button
             aria-label="Go back"
             className="icon-button"
-            onClick={() => go("home")}
+            onClick={() => go("back")}
             type="button"
           >
             <Icon name="chevron" />
@@ -188,7 +188,7 @@ export default function AvatarGroupScreen({ go }: { go: Go }) {
               setShowError(true)
               if (!ready) return
               dispatch({ type: "completeProfile" })
-              go("setup")
+              go("continue")
             }}
           >
             LET&apos;S GO

@@ -22,7 +22,7 @@ export default function LeaderboardScreen({ go }: { go: Go }) {
       <div className="screen-layer">
         <TopBar
           coins={state.coins}
-          onBack={() => go("town")}
+          onBack={() => go("back")}
           title="GROUP RANKINGS"
         />
         <div className="content-scroll leaderboard-content">
@@ -79,7 +79,7 @@ export default function LeaderboardScreen({ go }: { go: Go }) {
           </section>
         </div>
         <footer className="sticky-action">
-          <Button className="button-primary" onClick={() => go("town")}>
+          <Button className="button-primary" onClick={() => go("back")}>
             BACK TO MARKET
           </Button>
         </footer>

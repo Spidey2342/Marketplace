@@ -19,7 +19,7 @@ export default function ChallengeScreen({ go }: { go: Go }) {
       <div className="screen-layer">
         <TopBar
           coins={state.coins}
-          onBack={() => go("town")}
+          onBack={() => go("back")}
           title="WEEKLY CHALLENGE"
         />
         <div className="content-scroll challenge-content">

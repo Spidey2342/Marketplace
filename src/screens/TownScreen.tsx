@@ -59,9 +59,14 @@ export default function TownScreen({ go }: { go: Go }) {
     <AppFrame activeScene className="town-screen">
       <div className="town-top">
         <div className="player-status">
-          <div className="mini-avatar">
+          <button
+            aria-label="Edit your look"
+            className="mini-avatar"
+            onClick={() => go("avatar")}
+            type="button"
+          >
             <span />
-          </div>
+          </button>
           <div>
             <span>{stallName}</span>
             <strong>
@@ -182,7 +187,7 @@ export default function TownScreen({ go }: { go: Go }) {
         </button>
         <button
           className="control-button"
-          onClick={() => go("setup")}
+          onClick={() => go("restock")}
           type="button"
         >
           <Icon name="market" size={24} />
@@ -194,6 +199,11 @@ export default function TownScreen({ go }: { go: Go }) {
         <button onClick={() => go("challenge")} type="button">
           <Icon name="spark" size={20} />
           <span>Weekly challenge</span>
+          <Icon name="arrow" size={18} />
+        </button>
+        <button onClick={() => go("rankings")} type="button">
+          <Icon name="group" size={20} />
+          <span>Rankings</span>
           <Icon name="arrow" size={18} />
         </button>
       </div>

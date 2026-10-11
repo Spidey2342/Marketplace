@@ -1,0 +1,212 @@
+.upgrade-screen {
+  height: 100svh;
+  max-height: 100svh;
+}
+
+.upgrade-screen .screen-layer {
+  height: 100%;
+  min-height: 0;
+}
+
+.upgrade-screen .content-scroll {
+  min-height: 0;
+}
+
+.upgrade-content {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px 16px 24px;
+}
+
+.stage-ladder {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(72px, 1.3fr);
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stage-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 72px;
+  padding: 6px 2px;
+  border: 3px solid var(--line);
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.1;
+  text-align: center;
+  background: var(--paper);
+}
+
+.stage-step span {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+}
+
+.stage-step i {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--ink);
+}
+
+.stage-step.is-owned {
+  background: var(--green-soft);
+}
+
+.stage-step.is-current {
+  background: var(--yellow);
+}
+
+.stage-step.is-locked {
+  color: var(--muted);
+  background: #efe8d4;
+}
+
+.next-card,
+.upgrade-card {
+  border: 3px solid var(--line);
+  border-radius: 16px;
+  background: var(--paper);
+}
+
+.next-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+}
+
+.next-card h2,
+.upgrade-list h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.next-card p,
+.upgrade-card p {
+  margin: 0;
+  font-size: 16px;
+}
+
+.next-card > strong {
+  font-family: "Baloo 2", sans-serif;
+  font-size: 28px;
+}
+
+.progress {
+  height: 16px;
+  overflow: hidden;
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  background: var(--cream);
+}
+
+.progress span {
+  display: block;
+  height: 100%;
+  background: var(--yellow);
+}
+
+.shortfall {
+  font-weight: 800;
+}
+
+.upgrade-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.upgrade-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 72px;
+  padding: 12px;
+}
+
+.upgrade-card strong {
+  font-family: "Baloo 2", sans-serif;
+  font-size: 18px;
+}
+
+.upgrade-card.is-owned {
+  background: var(--green-soft);
+}
+
+.upgrade-card.is-locked {
+  background: #efe8d4;
+}
+
+.upgrade-buy,
+.owned-mark {
+  display: grid;
+  place-items: center;
+  min-width: 96px;
+  min-height: 48px;
+  padding: 0 12px;
+  border: 3px solid var(--line);
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.upgrade-buy {
+  cursor: pointer;
+  color: var(--ink);
+  background: var(--yellow);
+}
+
+.upgrade-buy.is-disabled {
+  cursor: default;
+  color: var(--muted);
+  background: var(--cream);
+}
+
+.owned-mark {
+  width: 48px;
+  min-width: 48px;
+  color: var(--green);
+  background: var(--paper);
+}
+
+.rank-link {
+  min-height: 48px;
+  padding: 0;
+  border: 0;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 800;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  color: var(--green);
+  background: transparent;
+}
+
+.upgrade-screen .sticky-action {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 760px) {
+  .upgrade-screen {
+    height: calc(100svh - 48px);
+    max-height: calc(100svh - 48px);
+  }
+
+  .upgrade-content {
+    width: min(100%, 820px);
+    margin: auto;
+  }
+}

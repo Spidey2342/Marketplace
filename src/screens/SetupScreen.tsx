@@ -27,7 +27,7 @@ export default function SetupScreen({ go }: { go: Go }) {
       <div className="screen-layer">
         <TopBar
           coins={state.coins}
-          onBack={() => go("home")}
+          onBack={() => go("back")}
           title="STOCK YOUR STALL"
         />
         <div className="content-scroll setup-content">
@@ -178,7 +178,7 @@ export default function SetupScreen({ go }: { go: Go }) {
             onClick={() => {
               if (!canOpen) return
               dispatch({ type: "openStall", now: Date.now() })
-              go("town")
+              go("open-stall")
             }}
           >
             OPEN STALL

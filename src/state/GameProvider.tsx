@@ -11,6 +11,13 @@ import { groups } from "@/data/groups"
 import { weeklyChallenge } from "@/data/challenges"
 import { productById } from "@/data/products"
 import {
+  isStageId,
+  nextStage,
+  quickUpgrades,
+  upgradeLock,
+  type StageId,
+} from "@/data/upgrades"
+import {
   clampPrice,
   contributionForProfit,
   customerTiming,
@@ -18,12 +25,15 @@ import {
   readShortRound,
   rollCustomer,
   roundDurationMs,
+  ROUND_DURATION_MS,
   selectedStockCost,
   STARTING_COINS,
   summarizeRound,
   type RoundResult,
   type StallLine,
 } from "@/lib/economy"
+import { sampleResult } from "@/lib/sample"
+import type { Screen } from "@/lib/screen"
 
 export type ProofChoice = "none" | "photo" | "receipt" | "pending"
 
@@ -61,6 +71,8 @@ export type GameState = {
   roundProfits: number[]
   weekContribution: number
   challengesCompleted: number
+  stageId: StageId
+  ownedUpgrades: string[]
   showResults: boolean
   shortRound: boolean
   joystick: { x: number; y: number }
@@ -81,6 +93,9 @@ type Action =
   | { type: "setShoes"; id: string }
   | { type: "setGroup"; id: string }
   | { type: "completeProfile" }
+  | { type: "buyStage" }
+  | { type: "buyUpgrade"; id: string }
+  | { type: "applySample"; screen: Screen }
   | { type: "setProof"; proof: ProofChoice }
   | { type: "setJoystick"; x: number; y: number }
   | { type: "setSpeech"; text: string }
@@ -116,6 +131,8 @@ function freshState(): GameState {
     roundProfits: [],
     weekContribution: 0,
     challengesCompleted: 0,
+    stageId: "stall",
+    ownedUpgrades: [],
     showResults: false,
     shortRound: readShortRound(),
     joystick: { x: 0, y: 0 },
@@ -199,6 +216,14 @@ function loadState(): GameState {
         : [],
       weekContribution: Math.max(0, Number(parsed.weekContribution) || 0),
       challengesCompleted: Math.max(0, Number(parsed.challengesCompleted) || 0),
+      stageId: isStageId(parsed.stageId) ? parsed.stageId : "stall",
+      ownedUpgrades: Array.isArray(parsed.ownedUpgrades)
+        ? parsed.ownedUpgrades.filter(
+            (id): id is string =>
+              typeof id === "string" &&
+              quickUpgrades.some((item) => item.id === id),
+          )
+        : [],
       shortRound: Boolean(parsed.shortRound),
       showResults: false,
       lastSale: null,
@@ -295,6 +320,43 @@ function applyCustomer(state: GameState, now: number): GameState {
   }
 }
 
+function applySample(state: GameState, screen: Screen): GameState {
+  const next: GameState = {
+    ...state,
+    avatarName: state.avatarName.trim() ? state.avatarName : "Ama",
+    groupId: state.groupId ?? "block-a",
+    stall: state.stall.some((line) => line.selected) ? state.stall : freshStall(),
+    lastResult: state.lastResult ?? sampleResult,
+  }
+  if (screen === "town" && next.roundStatus !== "running") {
+    const now = Date.now()
+    return {
+      ...next,
+      profileComplete: true,
+      hasStocked: true,
+      roundStatus: "running",
+      roundEndsAt: now + ROUND_DURATION_MS,
+      lastCustomerAt: now,
+      customers: 0,
+      roundRevenue: 0,
+      roundStockCost: selectedStockCost(next.stall),
+    }
+  }
+  if (screen === "results") {
+    return {
+      ...next,
+      profileComplete: true,
+      roundStatus: "ended",
+      roundEndsAt: null,
+      showResults: false,
+    }
+  }
+  if (screen !== "home" && screen !== "avatar") {
+    return { ...next, profileComplete: true }
+  }
+  return next
+}
+
 function reducer(state: GameState, action: Action): GameState {
   switch (action.type) {
     case "toggleProduct": {
@@ -381,6 +443,30 @@ function reducer(state: GameState, action: Action): GameState {
         : state
     case "completeProfile":
       return { ...state, profileComplete: true }
+    case "buyStage": {
+      const upcoming = nextStage(state.stageId)
+      if (!upcoming || !upcoming.purchasable || state.coins < upcoming.cost) {
+        return state
+      }
+      return {
+        ...state,
+        coins: state.coins - upcoming.cost,
+        stageId: upcoming.id,
+      }
+    }
+    case "buyUpgrade": {
+      const item = quickUpgrades.find((upgrade) => upgrade.id === action.id)
+      if (!item || state.ownedUpgrades.includes(item.id)) return state
+      if (upgradeLock(item, state.stageId, state.reputation)) return state
+      if (state.coins < item.cost) return state
+      return {
+        ...state,
+        coins: state.coins - item.cost,
+        ownedUpgrades: [...state.ownedUpgrades, item.id],
+      }
+    }
+    case "applySample":
+      return applySample(state, action.screen)
     case "setJoystick":
       return {
         ...state,
@@ -452,6 +538,8 @@ export default function GameProvider({ children }: { children: ReactNode }) {
     state.roundProfits,
     state.weekContribution,
     state.challengesCompleted,
+    state.stageId,
+    state.ownedUpgrades,
     state.shortRound,
   ])
 

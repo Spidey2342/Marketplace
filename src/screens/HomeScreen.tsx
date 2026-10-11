@@ -16,7 +16,7 @@ export default function HomeScreen({ go }: { go: Go }) {
       setError(true)
       return
     }
-    go("setup")
+    go("play")
   }
 
   return (
@@ -34,7 +34,7 @@ export default function HomeScreen({ go }: { go: Go }) {
             <Button
               className="button-primary button-play"
               icon="arrow"
-              onClick={() => go("setup")}
+              onClick={() => go("play")}
             >
               PLAY NOW
             </Button>
@@ -43,7 +43,7 @@ export default function HomeScreen({ go }: { go: Go }) {
             </Button>
             <button
               className="text-button"
-              onClick={() => go("setup")}
+              onClick={() => go("play")}
               type="button"
             >
               Continue as guest
