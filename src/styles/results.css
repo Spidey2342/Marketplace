@@ -1,0 +1,254 @@
+.results-screen::after {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  content: "";
+  background: linear-gradient(rgba(4, 60, 50, 0.75), rgba(4, 46, 38, 0.97));
+}
+
+.results-layer {
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh;
+  padding: max(36px, env(safe-area-inset-top)) 18px max(24px, env(safe-area-inset-bottom));
+}
+
+.round-complete {
+  text-align: center;
+  color: var(--paper);
+}
+
+.round-complete .eyebrow {
+  color: var(--yellow);
+}
+
+.round-complete h1 {
+  margin: 2px 0;
+  font-size: 30px;
+}
+
+.round-complete p {
+  margin-bottom: 19px;
+  font-size: 16px;
+}
+
+.results-card {
+  position: relative;
+  padding: 30px 14px 15px;
+  border: 4px solid var(--line);
+  border-radius: 24px;
+  background: var(--cream);
+  box-shadow: 0 8px 0 var(--line);
+}
+
+.results-ribbon {
+  position: absolute;
+  top: -15px;
+  left: 50%;
+  min-width: 156px;
+  padding: 5px 16px;
+  transform: translateX(-50%) rotate(-1deg);
+  border: 3px solid var(--line);
+  border-radius: 8px;
+  text-align: center;
+  font-family: "Baloo 2", sans-serif;
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--paper);
+  background: var(--red);
+}
+
+.profit-mark {
+  text-align: center;
+}
+
+.coin-stack {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  margin: auto;
+  border: 3px solid var(--line);
+  border-radius: 50%;
+  background: var(--yellow);
+  box-shadow: 5px 3px 0 #d5961e;
+}
+
+.profit-mark > span {
+  display: block;
+  margin-top: 6px;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+  color: var(--muted);
+}
+
+.profit-mark > strong {
+  display: block;
+  margin-top: -6px;
+  font-family: "Baloo 2", sans-serif;
+  font-size: 46px;
+  color: var(--green);
+}
+
+.results-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin: 2px 0 13px;
+  border-block: 2px dashed #bdc5b4;
+}
+
+.results-stats div {
+  padding: 10px 4px;
+  text-align: center;
+}
+
+.results-stats div + div {
+  border-left: 2px dashed #bdc5b4;
+}
+
+.results-stats span,
+.results-stats strong {
+  display: block;
+}
+
+.results-stats span {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.results-stats strong {
+  font-family: "Baloo 2", sans-serif;
+  font-size: 21px;
+}
+
+.best-seller {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px;
+  border: 2px solid var(--line);
+  border-radius: 15px;
+  background: #f5d896;
+}
+
+.best-art {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: #efaba0;
+}
+
+.best-art .food {
+  transform: scale(0.72);
+}
+
+.best-seller > div:nth-child(2) {
+  min-width: 0;
+  flex: 1;
+}
+
+.best-seller span,
+.best-seller strong {
+  display: block;
+}
+
+.best-seller span {
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: var(--green);
+}
+
+.best-seller strong {
+  font-size: 14px;
+}
+
+.best-seller .pill {
+  padding-inline: 8px;
+  font-size: 14px;
+}
+
+.insight-card {
+  display: flex;
+  gap: 10px;
+  margin-top: 11px;
+  padding: 11px;
+  border-radius: 14px;
+  color: var(--paper);
+  background: var(--green);
+}
+
+.insight-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 38px;
+  height: 38px;
+  border-radius: 11px;
+  color: var(--ink);
+  background: var(--yellow);
+}
+
+.insight-card p {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+.insight-card strong {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 14px;
+  color: var(--yellow-light);
+}
+
+.results-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.results-actions .text-button {
+  min-height: 48px;
+  color: var(--paper);
+}
+
+.confetti {
+  position: absolute;
+  z-index: 1;
+  width: 10px;
+  height: 20px;
+  transform: rotate(25deg);
+  background: var(--yellow);
+}
+
+.confetti-one {
+  top: 8%;
+  left: 7%;
+}
+
+.confetti-two {
+  top: 16%;
+  right: 7%;
+  transform: rotate(-35deg);
+  background: var(--red);
+}
+
+.confetti-three {
+  top: 4%;
+  right: 24%;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #8fcb75;
+}
+
+@media (min-width: 760px) {
+  .results-layer {
+    width: 510px;
+    margin: auto;
+  }
+}

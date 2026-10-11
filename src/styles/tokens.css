@@ -1,0 +1,22 @@
+:root {
+  --ink: #182f2a;
+  --green: #075846;
+  --green-dark: #043c32;
+  --green-soft: #dcedd3;
+  --yellow: #ffc928;
+  --yellow-light: #ffe480;
+  --red: #e94b3c;
+  --indigo: #303c72;
+  --cream: #fff7df;
+  --paper: #fffdf3;
+  --orange: #f08b31;
+  --sky: #efab60;
+  --line: #173d35;
+  --muted: #687871;
+  --white: #ffffff;
+  --shadow: 0 7px 0 rgba(15, 55, 46, 0.18);
+  font-family: "Nunito", sans-serif;
+  color: var(--ink);
+  background: var(--green-dark);
+  font-synthesis: none;
+}

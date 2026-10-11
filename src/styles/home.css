@@ -1,0 +1,209 @@
+.home-screen::after {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  content: "";
+  background: linear-gradient(180deg, rgba(16, 51, 45, 0.05) 30%, rgba(4, 47, 39, 0.93) 75%);
+}
+
+.top-safe {
+  display: flex;
+  justify-content: center;
+  padding-top: max(20px, env(safe-area-inset-top));
+}
+
+.online-pill {
+  border-color: rgba(255, 255, 255, 0.72);
+  color: var(--paper);
+  background: rgba(11, 61, 48, 0.68);
+  backdrop-filter: blur(8px);
+}
+
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #76df6b;
+  box-shadow: 0 0 0 3px rgba(118, 223, 107, 0.2);
+}
+
+.brand {
+  position: absolute;
+  top: 18%;
+  left: 50%;
+  width: 90%;
+  transform: translateX(-50%);
+  text-align: center;
+  color: var(--paper);
+}
+
+.brand-sign {
+  position: relative;
+  width: 284px;
+  margin: auto;
+  padding: 18px 18px 31px;
+  transform: rotate(-2deg);
+  border: 5px solid #442e29;
+  border-radius: 18px 18px 8px 8px;
+  background: var(--green);
+  box-shadow:
+    0 9px 0 #442e29,
+    0 16px 24px rgba(65, 37, 25, 0.25);
+}
+
+.brand-kicker {
+  display: block;
+  margin-bottom: -7px;
+  font-family: "Baloo 2", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: var(--yellow-light);
+}
+
+.brand-name {
+  display: block;
+  height: 58px;
+  font-family: "Baloo 2", sans-serif;
+  font-size: 58px;
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.04em;
+  color: var(--cream);
+  text-shadow: 3px 3px 0 #233d35;
+}
+
+.brand-name-bottom {
+  margin-top: -6px;
+  color: var(--yellow);
+}
+
+.brand-awning {
+  position: absolute;
+  right: -5px;
+  bottom: -8px;
+  left: -5px;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  height: 29px;
+  overflow: hidden;
+  border: 4px solid #442e29;
+  border-top-width: 3px;
+  border-radius: 0 0 12px 12px;
+}
+
+.brand-awning i:nth-child(odd) {
+  background: var(--red);
+}
+
+.brand-awning i:nth-child(even) {
+  background: var(--yellow);
+}
+
+.brand p {
+  margin: 28px 0 0;
+  font-family: "Baloo 2", sans-serif;
+  font-size: 19px;
+  font-weight: 700;
+  text-shadow: 0 2px 8px #223e36;
+}
+
+.join-panel {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  padding: 24px 22px max(18px, env(safe-area-inset-bottom));
+}
+
+.join-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+  border: 3px solid var(--line);
+  border-radius: 22px;
+  background: var(--cream);
+  box-shadow: var(--shadow);
+}
+
+.join-form label {
+  font-family: "Baloo 2", sans-serif;
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.code-field {
+  display: flex;
+  min-height: 55px;
+  border: 3px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--white);
+}
+
+.code-field.has-error {
+  border-color: var(--red);
+}
+
+.code-field input {
+  width: 100%;
+  min-width: 0;
+  padding: 0 14px;
+  border: 0;
+  outline: 0;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  background: transparent;
+}
+
+.code-field button,
+.sheet-title button {
+  flex: 0 0 48px;
+  width: 48px;
+  min-width: 48px;
+  min-height: 48px;
+  border: 0;
+  cursor: pointer;
+  background: transparent;
+}
+
+.field-error {
+  margin: -5px 0 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: #ad302b;
+}
+
+.privacy-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-size: 16px;
+  font-weight: 700;
+  color: rgba(255, 253, 243, 0.84);
+}
+
+@media (min-width: 760px) {
+  .home-screen .brand {
+    top: 22%;
+    left: 31%;
+    width: 50%;
+  }
+
+  .home-screen .join-panel {
+    top: 0;
+    right: 0;
+    left: auto;
+    justify-content: center;
+    width: 40%;
+    padding: 55px;
+    border-left: 4px solid var(--line);
+    background: rgba(4, 60, 50, 0.92);
+  }
+}
