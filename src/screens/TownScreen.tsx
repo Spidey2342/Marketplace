@@ -51,7 +51,9 @@ export default function TownScreen({ go }: { go: Go }) {
       ? Math.max(0, Math.ceil((state.roundEndsAt - now) / 1000))
       : 0
   const time = formatClock(remaining)
-  const stallName = `${(state.avatarName || "My").toUpperCase()}'S STALL`
+  const stallName = state.avatarName.trim()
+    ? `${state.avatarName.trim().toUpperCase()}'S STALL`
+    : "MY STALL"
 
   return (
     <AppFrame activeScene className="town-screen">

@@ -6,6 +6,8 @@ import {
   type Dispatch,
   type ReactNode,
 } from "react"
+import { hairs, outfits, shoes } from "@/data/avatar"
+import { groups } from "@/data/groups"
 import { weeklyChallenge } from "@/data/challenges"
 import { productById } from "@/data/products"
 import {
@@ -36,6 +38,10 @@ export type SaleToast = {
 export type GameState = {
   coins: number
   avatarName: string
+  hairId: string
+  outfitId: string
+  shoeId: string
+  profileComplete: boolean
   groupId: string | null
   stall: StallLine[]
   roundStatus: "idle" | "running" | "ended"
@@ -69,6 +75,12 @@ type Action =
   | { type: "tick"; now: number }
   | { type: "endRound"; now: number }
   | { type: "acknowledgeResults" }
+  | { type: "setAvatarName"; name: string }
+  | { type: "setHair"; id: string }
+  | { type: "setOutfit"; id: string }
+  | { type: "setShoes"; id: string }
+  | { type: "setGroup"; id: string }
+  | { type: "completeProfile" }
   | { type: "setProof"; proof: ProofChoice }
   | { type: "setJoystick"; x: number; y: number }
   | { type: "setSpeech"; text: string }
@@ -80,7 +92,11 @@ const STORAGE_KEY = "market-street"
 function freshState(): GameState {
   return {
     coins: STARTING_COINS,
-    avatarName: "Kofi",
+    avatarName: "",
+    hairId: hairs[0].id,
+    outfitId: outfits[0].id,
+    shoeId: shoes[0].id,
+    profileComplete: false,
     groupId: null,
     stall: freshStall(),
     roundStatus: "idle",
@@ -136,10 +152,24 @@ function loadState(): GameState {
       ...blank,
       coins: Math.max(0, parsed.coins),
       avatarName:
-        typeof parsed.avatarName === "string" && parsed.avatarName.trim()
-          ? parsed.avatarName
+        typeof parsed.avatarName === "string"
+          ? parsed.avatarName.slice(0, 16)
           : blank.avatarName,
-      groupId: typeof parsed.groupId === "string" ? parsed.groupId : null,
+      hairId: hairs.some((item) => item.id === parsed.hairId)
+        ? String(parsed.hairId)
+        : blank.hairId,
+      outfitId: outfits.some((item) => item.id === parsed.outfitId)
+        ? String(parsed.outfitId)
+        : blank.outfitId,
+      shoeId: shoes.some((item) => item.id === parsed.shoeId)
+        ? String(parsed.shoeId)
+        : blank.shoeId,
+      profileComplete: Boolean(parsed.profileComplete),
+      groupId:
+        typeof parsed.groupId === "string" &&
+        groups.some((group) => group.id === parsed.groupId)
+          ? parsed.groupId
+          : null,
       stall: mergeStall(parsed.stall),
       roundStatus:
         parsed.roundStatus === "running" || parsed.roundStatus === "ended"
@@ -331,6 +361,26 @@ function reducer(state: GameState, action: Action): GameState {
       return { ...state, showResults: false }
     case "setProof":
       return { ...state, proof: action.proof }
+    case "setAvatarName":
+      return { ...state, avatarName: action.name.slice(0, 16) }
+    case "setHair":
+      return hairs.some((item) => item.id === action.id)
+        ? { ...state, hairId: action.id }
+        : state
+    case "setOutfit":
+      return outfits.some((item) => item.id === action.id)
+        ? { ...state, outfitId: action.id }
+        : state
+    case "setShoes":
+      return shoes.some((item) => item.id === action.id)
+        ? { ...state, shoeId: action.id }
+        : state
+    case "setGroup":
+      return groups.some((group) => group.id === action.id)
+        ? { ...state, groupId: action.id }
+        : state
+    case "completeProfile":
+      return { ...state, profileComplete: true }
     case "setJoystick":
       return {
         ...state,
@@ -380,6 +430,10 @@ export default function GameProvider({ children }: { children: ReactNode }) {
   }, [
     state.coins,
     state.avatarName,
+    state.hairId,
+    state.outfitId,
+    state.shoeId,
+    state.profileComplete,
     state.groupId,
     state.stall,
     state.roundStatus,
