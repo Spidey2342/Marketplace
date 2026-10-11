@@ -91,6 +91,10 @@
   color: var(--green);
 }
 
+.profit-mark.is-loss > strong {
+  color: var(--red);
+}
+
 .results-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

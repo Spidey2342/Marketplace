@@ -3,63 +3,78 @@ import Button from "@/components/ui/Button"
 import Icon from "@/components/ui/Icon"
 import Pill from "@/components/ui/Pill"
 import type { Go } from "@/lib/screen"
+import { useGame } from "@/state/GameProvider"
 
 export default function ResultsScreen({ go }: { go: Go }) {
+  const { state } = useGame()
+  const result = state.lastResult
+  const profit = result?.profit ?? 0
+  const loss = profit < 0
+  const profitLabel = `${profit > 0 ? "+" : profit < 0 ? "−" : ""}¢${Math.abs(profit)}`
+
   return (
     <AppFrame className="results-screen">
-      <div className="confetti confetti-one" />
-      <div className="confetti confetti-two" />
-      <div className="confetti confetti-three" />
+      {result && result.profit >= 0 && (
+        <>
+          <div className="confetti confetti-one" />
+          <div className="confetti confetti-two" />
+          <div className="confetti confetti-three" />
+        </>
+      )}
       <div className="results-layer">
         <div className="round-complete">
           <span className="eyebrow">MARKET CLOSED</span>
-          <h1>Solid hustle, Kofi!</h1>
-          <p>Your first sale is in the books.</p>
+          <h1>{result?.headline ?? "Market closed"}</h1>
+          <p>{result?.subline ?? "Open your stall to play a round."}</p>
         </div>
 
         <section className="results-card">
           <div className="results-ribbon">ROUND RESULT</div>
-          <div className="profit-mark">
+          <div className={`profit-mark ${loss ? "is-loss" : ""}`}>
             <div className="coin-stack">
               <Icon name="coin" size={34} />
             </div>
             <span>PROFIT</span>
-            <strong>+¢38</strong>
+            <strong>{profitLabel}</strong>
           </div>
           <div className="results-stats">
             <div>
               <span>Items sold</span>
-              <strong>11</strong>
+              <strong>{result?.itemsSold ?? 0}</strong>
             </div>
             <div>
               <span>Customers</span>
-              <strong>8</strong>
+              <strong>{result?.customers ?? 0}</strong>
             </div>
             <div>
               <span>Reputation</span>
-              <strong>+12</strong>
+              <strong>+{result?.reputationChange ?? 0}</strong>
             </div>
           </div>
-          <div className="best-seller">
-            <div className="best-art">
-              <div className="food food-1" />
+          {result?.bestSeller && (
+            <div className="best-seller">
+              <div className="best-art">
+                <div className={`food food-${result.bestSeller.productId}`} />
+              </div>
+              <div>
+                <span>BEST SELLER</span>
+                <strong>
+                  {result.bestSeller.name} · {result.bestSeller.sold} sold
+                </strong>
+              </div>
+              <Pill>
+                <Icon name="star" size={15} /> MVP
+              </Pill>
             </div>
-            <div>
-              <span>BEST SELLER</span>
-              <strong>Sobolo · 6 sold</strong>
-            </div>
-            <Pill>
-              <Icon name="star" size={15} /> MVP
-            </Pill>
-          </div>
+          )}
           <div className="insight-card">
             <div className="insight-icon">
               <Icon name="spark" size={22} />
             </div>
             <p>
-              <strong>Why you won</strong>
-              Your Sobolo was ¢1 cheaper than your neighbours&apos;. More people
-              stopped by.
+              <strong>{result?.reasonTitle ?? "What happened"}</strong>
+              {result?.reasonLine ??
+                "Stock the stall and the market will tell you how it went."}
             </p>
           </div>
         </section>
@@ -70,9 +85,9 @@ export default function ResultsScreen({ go }: { go: Go }) {
             icon="arrow"
             onClick={() => go("setup")}
           >
-            REINVEST ¢38
+            {profit > 0 ? `REINVEST ¢${profit}` : "REINVEST"}
           </Button>
-          <Button className="button-light" onClick={() => go("town")}>
+          <Button className="button-light" onClick={() => go("setup")}>
             PLAY AGAIN
           </Button>
           <button

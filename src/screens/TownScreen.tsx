@@ -3,21 +3,31 @@ import AppFrame from "@/components/scene/AppFrame"
 import MiniMap from "@/components/scene/MiniMap"
 import Icon from "@/components/ui/Icon"
 import Pill from "@/components/ui/Pill"
+import {
+  formatClock,
+  URGENT_TIMER_SECONDS,
+} from "@/lib/economy"
 import type { Go } from "@/lib/screen"
+import { useGame } from "@/state/GameProvider"
 
 export default function TownScreen({ go }: { go: Go }) {
-  const [seconds, setSeconds] = useState(294)
+  const { state, dispatch } = useGame()
+  const [now, setNow] = useState(() => Date.now())
   const [chatOpen, setChatOpen] = useState(false)
   const [emotesOpen, setEmotesOpen] = useState(false)
+  const openItems = state.stall.filter((line) => line.selected).length
 
   useEffect(() => {
-    const timer = window.setInterval(() => {
-      setSeconds((current) => (current > 0 ? current - 1 : 294))
-    }, 1000)
+    const timer = window.setInterval(() => setNow(Date.now()), 1000)
     return () => window.clearInterval(timer)
   }, [])
 
-  const time = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`
+  const remaining =
+    state.roundStatus === "running" && state.roundEndsAt
+      ? Math.max(0, Math.ceil((state.roundEndsAt - now) / 1000))
+      : 0
+  const time = formatClock(remaining)
+  const stallName = `${(state.avatarName || "My").toUpperCase()}'S STALL`
 
   return (
     <AppFrame activeScene className="town-screen">
@@ -27,18 +37,22 @@ export default function TownScreen({ go }: { go: Go }) {
             <span />
           </div>
           <div>
-            <span>KOFI&apos;S STALL</span>
-            <strong>Open · 3 items</strong>
+            <span>{stallName}</span>
+            <strong>
+              Open · {openItems} item{openItems === 1 ? "" : "s"}
+            </strong>
           </div>
         </div>
         <Pill className="coin-pill town-coins">
           <Icon name="coin" size={20} />
-          116
-          <span className="coin-gain">+16</span>
+          {state.coins}
+          {state.roundRevenue > 0 && (
+            <span className="coin-gain">+{state.roundRevenue}</span>
+          )}
         </Pill>
       </div>
 
-      <div className={`timer-card ${seconds < 30 ? "urgent" : ""}`}>
+      <div className={`timer-card ${remaining <= URGENT_TIMER_SECONDS ? "urgent" : ""}`}>
         <Icon name="clock" size={19} />
         <div>
           <span>MARKET CLOSES IN</span>
@@ -48,14 +62,18 @@ export default function TownScreen({ go }: { go: Go }) {
 
       <MiniMap />
 
-      <div className="sale-toast">
-        <div className="toast-face" />
-        <p>
-          <strong>Akos bought Sobolo!</strong>
-          <span>“Chale, refreshing!”</span>
-        </p>
-        <b>+¢5</b>
-      </div>
+      {state.roundStatus === "running" && state.lastSale && (
+        <div className="sale-toast" key={state.lastSale.id}>
+          <div className="toast-face" />
+          <p>
+            <strong>
+              {state.lastSale.buyer} bought {state.lastSale.productName}!
+            </strong>
+            <span>“{state.lastSale.line}”</span>
+          </p>
+          <b>+¢{state.lastSale.price}</b>
+        </div>
+      )}
 
       {chatOpen && (
         <div className="chat-sheet">
@@ -154,7 +172,7 @@ export default function TownScreen({ go }: { go: Go }) {
         </button>
         <button
           className="finish-demo"
-          onClick={() => go("results")}
+          onClick={() => dispatch({ type: "endRound", now: Date.now() })}
           type="button"
         >
           Finish round

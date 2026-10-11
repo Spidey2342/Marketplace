@@ -1,39 +1,34 @@
-import { useMemo, useState } from "react"
 import AppFrame from "@/components/scene/AppFrame"
 import Button from "@/components/ui/Button"
 import Icon from "@/components/ui/Icon"
 import Pill from "@/components/ui/Pill"
 import TopBar from "@/components/ui/TopBar"
+import { weeklyChallenge } from "@/data/challenges"
+import { timeUntilSunday } from "@/lib/economy"
 import type { Go } from "@/lib/screen"
+import { challengeProgress, useGame } from "@/state/GameProvider"
 
 export default function ChallengeScreen({ go }: { go: Go }) {
-  const [proof, setProof] = useState<"none" | "photo" | "receipt" | "pending">(
-    "none",
-  )
-  const steps = useMemo(
-    () => [
-      { done: true, label: "Choose one thing to sell" },
-      { done: true, label: "Agree a fair price" },
-      { done: proof === "pending", label: "Make the sale & add proof" },
-    ],
-    [proof],
-  )
+  const { state, dispatch } = useGame()
+  const steps = challengeProgress(state)
+  const doneCount = steps.filter((step) => step.done).length
+  const left = timeUntilSunday(Date.now())
 
   return (
     <AppFrame className="challenge-screen">
       <div className="screen-layer">
         <TopBar
-          coins={138}
+          coins={state.coins}
           onBack={() => go("town")}
           title="WEEKLY CHALLENGE"
         />
         <div className="content-scroll challenge-content">
           <div className="week-strip">
-            <span>WEEK 3</span>
-            <strong>First sale energy</strong>
+            <span>WEEK {weeklyChallenge.week}</span>
+            <strong>{weeklyChallenge.kicker}</strong>
             <Pill>
               <Icon name="clock" size={15} />
-              2d 14h left
+              {left.days}d {left.hours}h left
             </Pill>
           </div>
 
@@ -54,22 +49,23 @@ export default function ChallengeScreen({ go }: { go: Go }) {
               <div className="hand hand-right" />
             </div>
             <span className="eyebrow">REAL-LIFE CHALLENGE</span>
-            <h1>Make your first real sale</h1>
-            <p>
-              Sell one simple thing to someone you know. Start small — the win
-              is starting.
-            </p>
+            <h1>{weeklyChallenge.title}</h1>
+            <p>{weeklyChallenge.body}</p>
             <div className="reward-pill">
               <Icon name="star" size={20} />
               <span>REWARD</span>
-              <strong>200 coins + First Sale badge</strong>
+              <strong>
+                {weeklyChallenge.rewardCoins} coins + {weeklyChallenge.rewardBadge}
+              </strong>
             </div>
           </section>
 
           <section className="steps-card">
             <div className="card-heading">
               <h2>YOUR STEPS</h2>
-              <span>2 of 3</span>
+              <span>
+                {doneCount} of {steps.length}
+              </span>
             </div>
             {steps.map((step, index) => (
               <div
@@ -86,7 +82,7 @@ export default function ChallengeScreen({ go }: { go: Go }) {
 
           <section
             className={`proof-card ${
-              proof === "pending" ? "proof-pending" : ""
+              state.proof === "pending" ? "proof-pending" : ""
             }`}
           >
             <div className="card-heading">
@@ -94,9 +90,9 @@ export default function ChallengeScreen({ go }: { go: Go }) {
                 <span className="eyebrow">FINAL STEP</span>
                 <h2>Add your proof</h2>
               </div>
-              {proof === "pending" && <Pill>Pending review</Pill>}
+              {state.proof === "pending" && <Pill>Pending review</Pill>}
             </div>
-            {proof === "pending" ? (
+            {state.proof === "pending" ? (
               <div className="pending-state">
                 <div className="pending-check">
                   <Icon name="check" size={28} />
@@ -116,8 +112,8 @@ export default function ChallengeScreen({ go }: { go: Go }) {
                 </p>
                 <div className="proof-options">
                   <button
-                    className={proof === "photo" ? "selected" : ""}
-                    onClick={() => setProof("photo")}
+                    className={state.proof === "photo" ? "selected" : ""}
+                    onClick={() => dispatch({ type: "setProof", proof: "photo" })}
                     type="button"
                   >
                     <Icon name="camera" size={25} />
@@ -125,8 +121,10 @@ export default function ChallengeScreen({ go }: { go: Go }) {
                     <small>Product or sale</small>
                   </button>
                   <button
-                    className={proof === "receipt" ? "selected" : ""}
-                    onClick={() => setProof("receipt")}
+                    className={state.proof === "receipt" ? "selected" : ""}
+                    onClick={() =>
+                      dispatch({ type: "setProof", proof: "receipt" })
+                    }
                     type="button"
                   >
                     <Icon name="receipt" size={25} />
@@ -134,10 +132,12 @@ export default function ChallengeScreen({ go }: { go: Go }) {
                     <small>Hide private info</small>
                   </button>
                 </div>
-                {proof !== "none" && (
+                {state.proof !== "none" && (
                   <Button
                     className="button-primary submit-proof"
-                    onClick={() => setProof("pending")}
+                    onClick={() =>
+                      dispatch({ type: "setProof", proof: "pending" })
+                    }
                   >
                     SUBMIT PROOF
                   </Button>

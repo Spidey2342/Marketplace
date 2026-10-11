@@ -1,38 +1,32 @@
-import { useState } from "react"
 import AppFrame from "@/components/scene/AppFrame"
 import Button from "@/components/ui/Button"
 import Icon from "@/components/ui/Icon"
 import Pill from "@/components/ui/Pill"
 import TopBar from "@/components/ui/TopBar"
-import { products } from "@/data/products"
+import { productById, products } from "@/data/products"
+import {
+  priceVerdict,
+  selectedStockCost,
+} from "@/lib/economy"
 import type { Go } from "@/lib/screen"
+import { useGame } from "@/state/GameProvider"
 
 export default function SetupScreen({ go }: { go: Go }) {
-  const [selected, setSelected] = useState<number[]>([1, 2, 3])
-  const [prices, setPrices] = useState<Record<number, number>>({
-    1: 5,
-    2: 4,
-    3: 8,
-  })
-
-  function toggle(id: number) {
-    setSelected((current) =>
-      current.includes(id)
-        ? current.filter((productId) => productId !== id)
-        : [...current, id],
-    )
-  }
-
-  const totalCost = products
-    .filter((product) => selected.includes(product.id))
-    .reduce((sum, product) => sum + product.cost, 0)
-  const hasWarning = selected.some((id) => prices[id] > 8)
+  const { state, dispatch } = useGame()
+  const selected = state.stall.filter((line) => line.selected)
+  const totalCost = selectedStockCost(state.stall)
+  const pricey = selected.filter(
+    (line) => priceVerdict(line.price, productById(line.productId)) === "Too high",
+  )
+  const shortBy = Math.max(0, totalCost - state.coins)
+  const roundRunning = state.roundStatus === "running"
+  const canOpen = selected.length > 0 && shortBy === 0 && !roundRunning
 
   return (
     <AppFrame className="setup-screen">
       <div className="screen-layer">
         <TopBar
-          coins={100}
+          coins={state.coins}
           onBack={() => go("home")}
           title="STOCK YOUR STALL"
         />
@@ -42,14 +36,19 @@ export default function SetupScreen({ go }: { go: Go }) {
               <span className="eyebrow">TODAY&apos;S ROUND</span>
               <h1>What are we selling?</h1>
             </div>
-            <Pill>{selected.length}/3 picked</Pill>
+            <Pill>
+              {selected.length}/{products.length} picked
+            </Pill>
           </div>
 
           <div className="product-list">
             {products.map((product) => {
-              const isSelected = selected.includes(product.id)
-              const price = prices[product.id]
-              const tooHigh = price > 8
+              const line = state.stall.find(
+                (item) => item.productId === product.id,
+              )
+              const isSelected = Boolean(line?.selected)
+              const price = line?.price ?? product.price
+              const verdict = priceVerdict(price, product)
               return (
                 <article
                   className={`product-card ${isSelected ? "is-selected" : ""}`}
@@ -60,7 +59,10 @@ export default function SetupScreen({ go }: { go: Go }) {
                       isSelected ? "Remove" : "Add"
                     } ${product.name}`}
                     className={`product-check ${isSelected ? "checked" : ""}`}
-                    onClick={() => toggle(product.id)}
+                    onClick={() =>
+                      dispatch({ type: "toggleProduct", productId: product.id })
+                    }
+                    disabled={roundRunning}
                     type="button"
                   >
                     {isSelected ? (
@@ -87,11 +89,13 @@ export default function SetupScreen({ go }: { go: Go }) {
                           <button
                             aria-label={`Lower ${product.name} price`}
                             onClick={() =>
-                              setPrices((current) => ({
-                                ...current,
-                                [product.id]: Math.max(2, price - 1),
-                              }))
+                              dispatch({
+                                type: "setPrice",
+                                productId: product.id,
+                                price: price - 1,
+                              })
                             }
+                            disabled={roundRunning}
                             type="button"
                           >
                             <Icon name="minus" size={17} />
@@ -100,18 +104,24 @@ export default function SetupScreen({ go }: { go: Go }) {
                           <button
                             aria-label={`Raise ${product.name} price`}
                             onClick={() =>
-                              setPrices((current) => ({
-                                ...current,
-                                [product.id]: Math.min(12, price + 1),
-                              }))
+                              dispatch({
+                                type: "setPrice",
+                                productId: product.id,
+                                price: price + 1,
+                              })
                             }
+                            disabled={roundRunning}
                             type="button"
                           >
                             <Icon name="plus" size={17} />
                           </button>
                         </div>
-                        <span className={tooHigh ? "price-high" : "price-good"}>
-                          {tooHigh ? "Too high" : "Good price"}
+                        <span
+                          className={
+                            verdict === "Good price" ? "price-good" : "price-high"
+                          }
+                        >
+                          {verdict}
                         </span>
                       </div>
                     )}
@@ -131,13 +141,28 @@ export default function SetupScreen({ go }: { go: Go }) {
             </div>
           )}
 
-          {hasWarning && selected.length > 0 && (
+          {pricey.length > 0 && (
             <div className="warning-callout">
               <Icon name="spark" size={22} />
               <p>
-                <strong>Ei, that&apos;s pricey!</strong> Neighbours sell similar
-                items for ¢6–¢8.
+                <strong>Ei, that&apos;s pricey!</strong>{" "}
+                {`${pricey
+                  .map((line) => {
+                    const product = productById(line.productId)
+                    return `Neighbours sell ${product.name} for ¢${product.neighborPrice}`
+                  })
+                  .join(". ")}.`}
               </p>
+            </div>
+          )}
+
+          {shortBy > 0 && selected.length > 0 && (
+            <div className="empty-callout">
+              <Icon name="coin" size={24} />
+              <div>
+                <strong>Coins are a bit short</strong>
+                <p>You need ¢{shortBy} more to stock this.</p>
+              </div>
             </div>
           )}
         </div>
@@ -148,11 +173,13 @@ export default function SetupScreen({ go }: { go: Go }) {
             <strong>¢{totalCost}</strong>
           </div>
           <Button
-            className={`button-primary ${
-              selected.length === 0 ? "button-disabled" : ""
-            }`}
+            className={`button-primary ${canOpen ? "" : "button-disabled"}`}
             icon="arrow"
-            onClick={() => selected.length > 0 && go("town")}
+            onClick={() => {
+              if (!canOpen) return
+              dispatch({ type: "openStall", now: Date.now() })
+              go("town")
+            }}
           >
             OPEN STALL
           </Button>
