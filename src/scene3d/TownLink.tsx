@@ -3,7 +3,8 @@ import type { RealtimeChannel } from "@supabase/supabase-js"
 import { hairs, lookById, outfits, shoes } from "@/data/avatar"
 import { chatPhrases } from "@/data/chat"
 import { emotes } from "@/data/emotes"
-import { goodsFromStall } from "@/lib/sync"
+import { ensureSession, goodsFromStall } from "@/lib/sync"
+import { resolveTownChannelBase } from "@/lib/townChannel"
 import { sessionUserId, supabase } from "@/lib/supabase"
 import {
   applyChat,
@@ -77,20 +78,28 @@ export default function TownLink({ me }: { me: Me }) {
     let active: RealtimeChannel | null = null
     const remotes = readFakeCount()
 
-    if (!supabase || !sessionUserId) {
-      setSolo(true)
-      if (remotes > 0) seedFakes(remotes)
-      return () => {
-        resetTown()
+    async function boot() {
+      if (!supabase) {
+        setSolo(true)
+        if (remotes > 0) seedFakes(remotes)
+        return
       }
+
+      const userId = sessionUserId ?? (await ensureSession())
+      if (gone) return
+      if (!userId) {
+        setSolo(true)
+        if (remotes > 0) seedFakes(remotes)
+        return
+      }
+
+      selfId = userId
+      const base = await resolveTownChannelBase(supabase, me.friendsRoom, me.groupId)
+      if (gone) return
+      await join(base, true)
     }
 
-    selfId = sessionUserId
-    const base = me.friendsRoom
-      ? `friends-${me.friendsRoom.toLowerCase()}`
-      : `town-${me.groupId ?? "solo"}`
-
-    void join(base, true)
+    void boot()
 
     return () => {
       gone = true
@@ -107,6 +116,7 @@ export default function TownLink({ me }: { me: Me }) {
       })
       active = next
       channel = next
+      const base = name
       next.on("presence", { event: "sync" }, () => {
         const state = next.presenceState() as Record<string, PresenceRow[]>
         const rows = Object.entries(state).map(([id, metas]) => {
