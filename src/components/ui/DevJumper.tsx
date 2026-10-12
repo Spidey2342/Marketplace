@@ -1,10 +1,11 @@
 import { useState } from "react"
+import { roundEvents, type ChoiceKind, type EventId } from "@/data/events"
 import type { Screen } from "@/lib/screen"
 
 const screens: { id: Screen; label: string }[] = [
   { id: "home", label: "Home" },
   { id: "avatar", label: "Avatar" },
-  { id: "setup", label: "Stall" },
+  { id: "setup", label: "Stock" },
   { id: "town", label: "Town" },
   { id: "results", label: "Results" },
   { id: "challenge", label: "Challenge" },
@@ -14,8 +15,12 @@ const screens: { id: Screen; label: string }[] = [
 
 export default function DevJumper({
   onJump,
+  onEvent,
+  onChoice,
 }: {
   onJump: (screen: Screen) => void
+  onEvent: (id: EventId) => void
+  onChoice: (kind: ChoiceKind) => void
 }) {
   const [open, setOpen] = useState(false)
 
@@ -23,6 +28,36 @@ export default function DevJumper({
     <div className="dev-jumper">
       {open && (
         <div className="dev-menu">
+          {roundEvents.map((event) => (
+            <button
+              key={event.id}
+              onClick={() => {
+                onEvent(event.id)
+                setOpen(false)
+              }}
+              type="button"
+            >
+              {event.name}
+            </button>
+          ))}
+          <button
+            onClick={() => {
+              onChoice("bulk")
+              setOpen(false)
+            }}
+            type="button"
+          >
+            Bulk card
+          </button>
+          <button
+            onClick={() => {
+              onChoice("credit")
+              setOpen(false)
+            }}
+            type="button"
+          >
+            Credit card
+          </button>
           {screens.map((screen) => (
             <button
               key={screen.id}

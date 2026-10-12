@@ -95,6 +95,52 @@
   color: var(--red);
 }
 
+.event-result,
+.credit-result,
+.bought-result {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.credit-result {
+  color: var(--green);
+}
+
+.who-bought {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.who-bought > span {
+  grid-column: 1 / -1;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.who-bought div {
+  padding: 8px 10px;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: var(--paper);
+}
+
+.who-bought div span {
+  display: block;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--muted);
+}
+
+.who-bought strong {
+  font-size: 16px;
+}
+
 .results-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

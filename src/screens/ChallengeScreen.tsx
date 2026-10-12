@@ -1,18 +1,80 @@
+import { useEffect, useRef, useState } from "react"
 import AppFrame from "@/components/scene/AppFrame"
 import Button from "@/components/ui/Button"
 import Icon from "@/components/ui/Icon"
 import Pill from "@/components/ui/Pill"
 import TopBar from "@/components/ui/TopBar"
-import { weeklyChallenge } from "@/data/challenges"
+import { currentChallenge, explorerChallenge, NOTE_MAX, PASSPORT_AFTER, weekId } from "@/data/challenges"
+import { EXPLORER_STALLS } from "@/data/visits"
 import { timeUntilSunday } from "@/lib/economy"
 import type { Go } from "@/lib/screen"
+import { isRemote, loadChallengeStatus, submitChallenge } from "@/lib/sync"
+import { isDev } from "@/scene3d/tier"
 import { challengeProgress, useGame } from "@/state/GameProvider"
 
 export default function ChallengeScreen({ go }: { go: Go }) {
   const { state, dispatch } = useGame()
+  const now = Date.now()
+  const challenge = currentChallenge(now)
   const steps = challengeProgress(state)
   const doneCount = steps.filter((step) => step.done).length
-  const left = timeUntilSunday(Date.now())
+  const left = timeUntilSunday(now)
+  const [note, setNote] = useState(state.challengeNote)
+  const [sendError, setSendError] = useState("")
+  const [review, setReview] = useState<string | null>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
+  const unlocked = state.challengesCompleted >= PASSPORT_AFTER
+  const remote = isRemote()
+
+  useEffect(() => {
+    if (!remote) return
+    void loadChallengeStatus().then((status) => {
+      if (!status) return
+      setReview(status)
+      if (status === "pending") dispatch({ type: "setProof", proof: "pending" })
+      if (status === "approved") dispatch({ type: "approveChallenge", now: Date.now() })
+    })
+  }, [dispatch, remote])
+
+  async function sendNote() {
+    if (!remote) {
+      dispatch({ type: "setProof", proof: "pending" })
+      return
+    }
+    setSendError("")
+    try {
+      await submitChallenge({
+        challengeId: String(challenge.id),
+        proofType: "note",
+        note,
+      })
+      dispatch({ type: "setProof", proof: "pending" })
+      setReview("pending")
+    } catch {
+      setSendError("Could not send that note. Try again.")
+    }
+  }
+
+  async function sendFile(file: File | undefined) {
+    if (!file) return
+    if (!remote) {
+      dispatch({ type: "setProof", proof: "pending" })
+      return
+    }
+    const proofType = state.proof === "receipt" ? "receipt" : "photo"
+    setSendError("")
+    try {
+      await submitChallenge({
+        challengeId: String(challenge.id),
+        proofType,
+        file,
+      })
+      dispatch({ type: "setProof", proof: "pending" })
+      setReview("pending")
+    } catch {
+      setSendError("Could not send that photo. Try again.")
+    }
+  }
 
   return (
     <AppFrame className="challenge-screen">
@@ -24,8 +86,8 @@ export default function ChallengeScreen({ go }: { go: Go }) {
         />
         <div className="content-scroll challenge-content">
           <div className="week-strip">
-            <span>WEEK {weeklyChallenge.week}</span>
-            <strong>{weeklyChallenge.kicker}</strong>
+            <span>WEEK {weekId(now)}</span>
+            <strong>{challenge.kicker}</strong>
             <Pill>
               <Icon name="clock" size={15} />
               {left.days}d {left.hours}h left
@@ -49,13 +111,13 @@ export default function ChallengeScreen({ go }: { go: Go }) {
               <div className="hand hand-right" />
             </div>
             <span className="eyebrow">REAL-LIFE CHALLENGE</span>
-            <h1>{weeklyChallenge.title}</h1>
-            <p>{weeklyChallenge.body}</p>
+            <h1>{challenge.title}</h1>
+            <p>{challenge.body}</p>
             <div className="reward-pill">
               <Icon name="star" size={20} />
               <span>REWARD</span>
               <strong>
-                {weeklyChallenge.rewardCoins} coins + {weeklyChallenge.rewardBadge}
+                {challenge.rewardCoins} coins + {challenge.rewardBadge}
               </strong>
             </div>
           </section>
@@ -105,6 +167,30 @@ export default function ChallengeScreen({ go }: { go: Go }) {
                   </p>
                 </div>
               </div>
+            ) : challenge.proof === "note" ? (
+              <>
+                <p className="proof-helper">
+                  Write a short note. No names or numbers. {NOTE_MAX} characters.
+                </p>
+                <textarea
+                  className="challenge-note"
+                  maxLength={NOTE_MAX}
+                  onChange={(event) => {
+                    const next = event.target.value.slice(0, NOTE_MAX)
+                    setNote(next)
+                    dispatch({ type: "setChallengeNote", note: next })
+                  }}
+                  value={note}
+                />
+                <Button
+                  className="button-primary submit-proof"
+                  onClick={() => {
+                    void sendNote()
+                  }}
+                >
+                  SUBMIT NOTE
+                </Button>
+              </>
             ) : (
               <>
                 <p className="proof-helper">
@@ -135,9 +221,13 @@ export default function ChallengeScreen({ go }: { go: Go }) {
                 {state.proof !== "none" && (
                   <Button
                     className="button-primary submit-proof"
-                    onClick={() =>
-                      dispatch({ type: "setProof", proof: "pending" })
-                    }
+                    onClick={() => {
+                      if (!remote) {
+                        dispatch({ type: "setProof", proof: "pending" })
+                        return
+                      }
+                      fileRef.current?.click()
+                    }}
                   >
                     SUBMIT PROOF
                   </Button>
@@ -146,6 +236,51 @@ export default function ChallengeScreen({ go }: { go: Go }) {
             )}
           </section>
 
+          <section className="proof-card">
+            <div className="card-heading">
+              <div>
+                <span className="eyebrow">{explorerChallenge.kicker}</span>
+                <h2>{explorerChallenge.title}</h2>
+              </div>
+              {state.explorerClaimed && <Pill>Done</Pill>}
+            </div>
+            <p className="proof-helper">
+              {state.explorerStalls.length} of {EXPLORER_STALLS} stalls. Worth ¢
+              {explorerChallenge.rewardCoins} and the {explorerChallenge.rewardBadge} badge.
+            </p>
+          </section>
+          {sendError && <p className="field-error">{sendError}</p>}
+          {review === "rejected" && (
+            <p className="field-help">This week&apos;s proof was not approved.</p>
+          )}
+          <input
+            accept="image/*"
+            hidden
+            onChange={(event) => {
+              const file = event.target.files?.[0]
+              event.target.value = ""
+              void sendFile(file)
+            }}
+            ref={fileRef}
+            type="file"
+          />
+          {isDev() && !remote && (
+            <Button
+              className="button-light"
+              onClick={() => dispatch({ type: "approveChallenge", now: Date.now() })}
+            >
+              Approve proof
+            </Button>
+          )}
+          {unlocked && (
+            <section className="passport-unlock">
+              <strong>Business Passport</strong>
+              <p>Three challenges done. Your starter plan is ready.</p>
+              <Button className="button-primary" onClick={() => go("passport")}>
+                Open passport
+              </Button>
+            </section>
+          )}
           <div className="privacy-card">
             <Icon name="shield" size={22} />
             <p>

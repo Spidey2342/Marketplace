@@ -3,6 +3,7 @@ import Button from "@/components/ui/Button"
 import Icon from "@/components/ui/Icon"
 import Pill from "@/components/ui/Pill"
 import type { Go } from "@/lib/screen"
+import { products } from "@/data/products"
 import { useGame } from "@/state/GameProvider"
 
 export default function ResultsScreen({ go }: { go: Go }) {
@@ -37,6 +38,30 @@ export default function ResultsScreen({ go }: { go: Go }) {
             <span>PROFIT</span>
             <strong>{profitLabel}</strong>
           </div>
+          {state.syncNote && <p className="field-help">{state.syncNote}</p>}
+          <div className="who-bought">
+            <span>Who bought</span>
+            <div>
+              <span>Students</span>
+              <strong>{result?.buyers.student ?? 0}</strong>
+            </div>
+            <div>
+              <span>Workers</span>
+              <strong>{result?.buyers.worker ?? 0}</strong>
+            </div>
+            <div>
+              <span>Visitors</span>
+              <strong>{result?.buyers.visitor ?? 0}</strong>
+            </div>
+            <div>
+              <span>Regulars</span>
+              <strong>{result?.buyers.regular ?? 0}</strong>
+            </div>
+            <div>
+              <span>Players</span>
+              <strong>{result?.buyers.player ?? 0}</strong>
+            </div>
+          </div>
           <div className="results-stats">
             <div>
               <span>Items sold</span>
@@ -53,8 +78,17 @@ export default function ResultsScreen({ go }: { go: Go }) {
           </div>
           {result?.bestSeller && (
             <div className="best-seller">
-              <div className="best-art">
-                <div className={`food food-${result.bestSeller.productId}`} />
+              <div
+                className="best-art"
+                style={{
+                  background:
+                    products.find((item) => item.id === result.bestSeller?.productId)?.color ??
+                    "#ffc928",
+                }}
+              >
+                <div
+                  className={`prop prop-${products.find((item) => item.id === result.bestSeller?.productId)?.propType ?? "pile"}`}
+                />
               </div>
               <div>
                 <span>BEST SELLER</span>
@@ -67,6 +101,11 @@ export default function ResultsScreen({ go }: { go: Go }) {
               </Pill>
             </div>
           )}
+          <p className="bought-result">
+            Bought from others: {result?.boughtItems ?? 0} items, ¢{result?.boughtSpend ?? 0}
+          </p>
+          {result?.eventLine && <p className="event-result">{result.eventLine}</p>}
+          {result?.creditLine && <p className="credit-result">{result.creditLine}</p>}
           <div className="insight-card">
             <div className="insight-icon">
               <Icon name="spark" size={22} />

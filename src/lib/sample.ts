@@ -14,4 +14,12 @@ export const sampleResult: RoundResult = {
   outcome: "win",
   headline: "The stall ate today.",
   subline: "Sobolo did the most work.",
+  buyers: { student: 4, worker: 4, visitor: 1, regular: 2, player: 0 },
+  boughtItems: 0,
+  boughtSpend: 0,
+  spoiled: [],
+  eventId: "calm",
+  eventName: "Calm day",
+  eventLine: "Calm day. Nothing special shifted the crowd.",
+  creditLine: null,
 }

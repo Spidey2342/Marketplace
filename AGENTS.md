@@ -1,9 +1,9 @@
 # Market Street
 
-Multiplayer 3D lifestyle game where Ghanaian youth run market stalls and take real-life business challenges. This repo is the mobile-first web client. A 3D street (React Three Fiber) and a Supabase backend come later; build the UI so they can plug in.
+Multiplayer 3D lifestyle game where Ghanaian youth run market stalls and take real-life business challenges. This repo is the mobile-first web client. The Town HUD sits on a React Three Fiber street. Supabase is optional. Without the two public keys the game stays on this device.
 
 ## Stack
-Vite, React 19, TypeScript (strict), Tailwind v4 plus the existing CSS tokens. Package manager: pnpm. Do not add a dependency without saying why in your summary.
+Vite, React 19, TypeScript (strict), Tailwind v4, Three.js with React Three Fiber, plus the existing CSS tokens. Package manager: pnpm. Do not add a dependency without saying why in your summary.
 
 ## Commands
 - pnpm dev  runs the app
@@ -15,8 +15,9 @@ src/screens/      one file per screen
 src/components/ui/     Button, Pill, Icon, TopBar and other small parts
 src/components/scene/  AppFrame, MarketBackdrop, MiniMap, Brand
 src/data/         static content: products, groups, upgrades, challenges
-src/state/        game state (coins, stall, round, group, avatar)
+src/state/        game state (coins, stall, round, group, avatar) and input.ts for the joystick
 src/lib/          pure helpers, including economy.ts
+src/scene3d/      TownCanvas and the street scene. Loaded only on the Town screen.
 src/styles/       tokens.css plus one CSS file per screen or component group
 
 ## Rules
@@ -30,3 +31,17 @@ src/styles/       tokens.css plus one CSS file per screen or component group
 8. Safety: preset chat only, no exact location anywhere, no real-money features, no betting-style mechanics.
 9. Copy: short, warm, Ghanaian (cedis shown as ¢, light slang like Chale and Ei). No lectures.
 10. Do one task per prompt. Run pnpm build, then end with a short summary: files changed, anything you were unsure about.
+
+## 3D rules
+1. Build objects from primitives and shared materials. No external models yet.
+2. Never allocate objects inside useFrame.
+3. Never keep per-frame values in React state. Use refs.
+4. Triangle budget: 100,000.
+5. Cap the pixel ratio at 1.5.
+6. Unmount the Canvas when leaving the Town screen.
+
+## Backend rules
+1. Never use or mention the service_role key in client code. The app only uses the anon key.
+2. Every table has row level security. The app does not turn it off.
+3. The game keeps working offline from local state when the keys are missing or the network fails.
+4. Store the minimum personal data: nickname and avatar only. No email, no phone number, no exact location.

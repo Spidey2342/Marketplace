@@ -7,6 +7,7 @@ export type Screen =
   | "challenge"
   | "leaderboard"
   | "upgrade"
+  | "passport"
 
 export type Intent =
   | "play"
@@ -20,5 +21,6 @@ export type Intent =
   | "challenge"
   | "rankings"
   | "avatar"
+  | "passport"
 
 export type Go = (intent: Intent) => void

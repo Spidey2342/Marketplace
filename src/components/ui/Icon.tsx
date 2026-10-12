@@ -19,6 +19,8 @@ export type IconName =
   | "shield"
   | "spark"
   | "star"
+  | "thumb"
+  | "thumbDown"
   | "user"
   | "x"
 
@@ -107,6 +109,12 @@ export default function Icon({
     ),
     star: (
       <path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3Z" />
+    ),
+    thumb: (
+      <path d="M8 11v9H5a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1h3Zm0 0 3.2-6.2A2 2 0 0 1 15 6.4V11h4.1a2 2 0 0 1 2 2.3l-1 6A2 2 0 0 1 18.1 21H8" />
+    ),
+    thumbDown: (
+      <path d="M16 13V4h3a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1h-3Zm0 0-3.2 6.2A2 2 0 0 1 9 17.6V13H4.9a2 2 0 0 1-2-2.3l1-6A2 2 0 0 1 5.9 3H16" />
     ),
     user: (
       <>

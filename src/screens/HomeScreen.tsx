@@ -5,17 +5,26 @@ import Button from "@/components/ui/Button"
 import Icon from "@/components/ui/Icon"
 import Pill from "@/components/ui/Pill"
 import type { Go } from "@/lib/screen"
+import { useGame } from "@/state/GameProvider"
 
 export default function HomeScreen({ go }: { go: Go }) {
+  const { dispatch } = useGame()
   const [joining, setJoining] = useState(false)
   const [code, setCode] = useState("")
   const [error, setError] = useState(false)
 
+  function playTown() {
+    dispatch({ type: "setFriendsRoom", code: null })
+    go("play")
+  }
+
   function joinRoom() {
-    if (code.trim().length < 4) {
+    const room = code.trim().toUpperCase()
+    if (!/^[A-Z0-9]{6}$/.test(room)) {
       setError(true)
       return
     }
+    dispatch({ type: "setFriendsRoom", code: room })
     go("play")
   }
 
@@ -34,7 +43,7 @@ export default function HomeScreen({ go }: { go: Go }) {
             <Button
               className="button-primary button-play"
               icon="arrow"
-              onClick={() => go("play")}
+              onClick={playTown}
             >
               PLAY NOW
             </Button>
@@ -43,7 +52,7 @@ export default function HomeScreen({ go }: { go: Go }) {
             </Button>
             <button
               className="text-button"
-              onClick={() => go("play")}
+              onClick={playTown}
               type="button"
             >
               Continue as guest
@@ -82,7 +91,7 @@ export default function HomeScreen({ go }: { go: Go }) {
             </div>
             {error && (
               <p className="field-error">
-                That code looks too short. Try again.
+                Room codes are 6 characters.
               </p>
             )}
             <Button className="button-primary" icon="arrow" type="submit">

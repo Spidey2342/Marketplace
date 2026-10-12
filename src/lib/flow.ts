@@ -6,26 +6,26 @@ export function destination(
 ): Screen | "back" {
   switch (intent) {
     case "play":
-      return profileComplete ? "setup" : "avatar"
+      return profileComplete ? "town" : "avatar"
     case "continue":
-      return profileComplete ? "back" : "setup"
+      return "town"
     case "back":
       return "back"
     case "open-stall":
-      return "town"
     case "restock":
     case "play-again":
-      return "setup"
+    case "upgrade-back":
+      return "town"
     case "reinvest":
       return "upgrade"
-    case "upgrade-back":
-      return "results"
     case "challenge":
       return "challenge"
     case "rankings":
       return "leaderboard"
     case "avatar":
       return "avatar"
+    case "passport":
+      return "passport"
     default:
       return "back"
   }

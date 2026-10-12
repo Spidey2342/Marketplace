@@ -3,6 +3,7 @@ export const BRAND_COST = 400
 export const TEAM_COST = 800
 export const BRANCHES_COST = 1500
 export const SIGN_COST = 60
+export const AWNING_ID = "awning"
 export const AWNING_COST = 90
 export const COOL_BOX_COST = 70
 export const COOL_BOX_REPUTATION = 10
@@ -73,7 +74,7 @@ export const quickUpgrades: QuickUpgrade[] = [
     cost: SIGN_COST,
   },
   {
-    id: "awning",
+    id: AWNING_ID,
     name: "Kente awning",
     detail: "Shade, and a little style.",
     cost: AWNING_COST,

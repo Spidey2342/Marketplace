@@ -6,14 +6,36 @@ import TopBar from "@/components/ui/TopBar"
 import { groupHustlers, leaderboard } from "@/data/groups"
 import { playerWeekPoints, timeUntilSunday } from "@/lib/economy"
 import type { Go } from "@/lib/screen"
+import { useEffect, useState } from "react"
+import { fetchRankings, isRemote, type RankRow } from "@/lib/sync"
 import { useGame } from "@/state/GameProvider"
 
 export default function LeaderboardScreen({ go }: { go: Go }) {
   const { state } = useGame()
   const left = timeUntilSunday(Date.now())
-  const rows = [...leaderboard]
-    .sort((a, b) => b.points - a.points)
-    .map((row, index) => ({ ...row, rank: index + 1 }))
+  const remote = isRemote()
+  const [live, setLive] = useState<RankRow[] | null>(null)
+  const [missed, setMissed] = useState(false)
+
+  useEffect(() => {
+    if (!remote) return
+    void fetchRankings().then((rows) => {
+      if (rows) setLive(rows)
+      else setMissed(true)
+    })
+  }, [remote])
+
+  const rows = remote
+    ? (live ?? []).map((row) => ({
+        id: row.group_id,
+        name: row.name,
+        points: row.points,
+        rank: row.rank,
+        moved: 0,
+      }))
+    : [...leaderboard]
+        .sort((a, b) => b.points - a.points)
+        .map((row, index) => ({ ...row, rank: index + 1 }))
   const mine = rows.find((row) => row.id === state.groupId) ?? null
   const added = playerWeekPoints(state.weekContribution, state.challengesCompleted)
 
@@ -51,6 +73,7 @@ export default function LeaderboardScreen({ go }: { go: Go }) {
             )}
           </section>
 
+          {remote && missed && <p className="field-help">Rankings will load when you are back online.</p>}
           <ol className="rank-list">
             {rows.map((row) => (
               <li
@@ -62,11 +85,12 @@ export default function LeaderboardScreen({ go }: { go: Go }) {
                 </span>
                 <strong>{row.name}</strong>
                 <span className="pts">{row.points}</span>
-                <Move places={row.moved} />
+                {remote ? <span /> : <Move places={row.moved} />}
               </li>
             ))}
           </ol>
 
+          {!remote && (
           <section className="hustle-card">
             <h2>Top hustlers in your group</h2>
             {groupHustlers.map((player, index) => (
@@ -77,6 +101,7 @@ export default function LeaderboardScreen({ go }: { go: Go }) {
               </div>
             ))}
           </section>
+          )}
         </div>
         <footer className="sticky-action">
           <Button className="button-primary" onClick={() => go("back")}>

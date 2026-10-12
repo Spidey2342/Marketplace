@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type PointerEvent } from "react"
-import { useGame } from "@/state/GameProvider"
+import { setMove } from "@/state/input"
 
 function clampUnit(value: number) {
   if (Number.isNaN(value)) return 0
@@ -18,12 +18,12 @@ const MOVE_KEYS = new Set([
 ])
 
 export default function Joystick() {
-  const { state, dispatch } = useGame()
   const baseRef = useRef<HTMLDivElement>(null)
   const dragging = useRef(false)
   const keys = useRef(new Set<string>())
   const [knob, setKnob] = useState({ x: 0, y: 0 })
   const [returning, setReturning] = useState(false)
+  const vector = useRef({ x: 0, y: 0 })
 
   function travel() {
     const width = baseRef.current?.getBoundingClientRect().width ?? 96
@@ -33,8 +33,14 @@ export default function Joystick() {
   function publish(x: number, y: number) {
     const next = { x: clampUnit(x), y: clampUnit(y) }
     const distance = travel()
+    vector.current = next
     setKnob({ x: next.x * distance, y: next.y * distance })
-    dispatch({ type: "setJoystick", x: next.x, y: next.y })
+    setMove(next.x, next.y)
+    const node = baseRef.current
+    if (node) {
+      node.dataset.x = String(next.x)
+      node.dataset.y = String(next.y)
+    }
   }
 
   function fromKeys() {
@@ -79,13 +85,14 @@ export default function Joystick() {
     }
     setReturning(true)
     setKnob({ x: 0, y: 0 })
-    dispatch({ type: "setJoystick", x: 0, y: 0 })
+    publish(0, 0)
   }
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       const key = event.key.toLowerCase()
       if (!MOVE_KEYS.has(key)) return
+      if (event.repeat) return
       const target = event.target
       if (
         target instanceof HTMLInputElement ||
@@ -122,16 +129,16 @@ export default function Joystick() {
       window.removeEventListener("keydown", onKeyDown)
       window.removeEventListener("keyup", onKeyUp)
       window.removeEventListener("blur", onBlur)
-      dispatch({ type: "setJoystick", x: 0, y: 0 })
+      setMove(0, 0)
     }
-  }, [dispatch])
+  }, [])
 
   return (
     <div
       aria-label="Move"
       className={`virtual-joystick ${returning ? "is-reset" : ""}`}
-      data-x={state.joystick.x}
-      data-y={state.joystick.y}
+      data-x={vector.current.x}
+      data-y={vector.current.y}
       onPointerCancel={release}
       onPointerDown={(event) => {
         event.preventDefault()

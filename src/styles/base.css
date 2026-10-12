@@ -26,6 +26,23 @@ input:focus-visible {
   outline-offset: 2px;
 }
 
+.offline-banner {
+  position: fixed;
+  z-index: 30;
+  top: max(8px, env(safe-area-inset-top));
+  left: 50%;
+  margin: 0;
+  padding: 6px 12px;
+  transform: translateX(-50%);
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 800;
+  pointer-events: none;
+}
+
 .app-frame {
   position: relative;
   isolation: isolate;

@@ -1,0 +1,159 @@
+.passport-print {
+  position: relative;
+  padding-top: 18px;
+}
+
+.passport-print .kente-strip {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  height: 12px;
+}
+
+.passport-print .kente-strip i {
+  background:
+    linear-gradient(45deg, transparent 35%, #202b56 36% 64%, transparent 65%),
+    var(--yellow);
+}
+
+.passport-print .kente-strip i:nth-child(even) {
+  background:
+    linear-gradient(-45deg, transparent 35%, var(--yellow) 36% 64%, transparent 65%),
+    var(--red);
+}
+
+.passport-print .brand {
+  margin: 8px 0 12px;
+}
+
+.passport-print h1 {
+  margin: 0 0 6px;
+  font-size: 28px;
+}
+
+.passport-lead,
+.passport-actions p,
+.passport-close {
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.passport-facts {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.passport-facts div {
+  padding: 10px 12px;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: var(--paper);
+}
+
+.passport-facts dt {
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.passport-facts dd {
+  margin: 2px 0 0;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.passport-print label {
+  display: block;
+  margin: 12px 0;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.passport-print textarea {
+  display: block;
+  width: 100%;
+  min-height: 72px;
+  margin-top: 6px;
+  padding: 10px;
+  border: 3px solid var(--line);
+  border-radius: 12px;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.passport-close {
+  margin: 16px 0;
+}
+
+.passport-actions p {
+  margin: 8px 0 0;
+  color: var(--muted);
+}
+
+.challenge-note {
+  width: 100%;
+  min-height: 96px;
+  margin: 8px 0;
+  padding: 10px;
+  border: 3px solid var(--line);
+  border-radius: 12px;
+  font: inherit;
+  font-size: 16px;
+}
+
+.passport-unlock {
+  margin: 12px 0 20px;
+  padding: 14px;
+  border: 3px solid var(--line);
+  border-radius: 16px;
+  background: var(--yellow-light);
+}
+
+.passport-unlock p,
+.passport-unlock strong {
+  font-size: 16px;
+}
+
+.passport-unlock button {
+  min-height: 48px;
+  margin-top: 8px;
+}
+
+@media print {
+  body {
+    background: white !important;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  .passport-print,
+  .passport-print * {
+    visibility: visible;
+  }
+
+  .passport-print {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 24px;
+    background: white;
+    color: #182f2a;
+  }
+
+  .passport-actions,
+  .dev-jumper,
+  .top-bar {
+    display: none !important;
+  }
+}

@@ -3,16 +3,18 @@ import MarketBackdrop from "@/components/scene/MarketBackdrop"
 
 export default function AppFrame({
   activeScene,
+  showBackdrop = true,
   children,
   className = "",
 }: {
   activeScene?: boolean
+  showBackdrop?: boolean
   children: ReactNode
   className?: string
 }) {
   return (
     <main className={`app-frame ${className}`}>
-      <MarketBackdrop active={activeScene} />
+      {showBackdrop && <MarketBackdrop active={activeScene} />}
       <div className="grain" />
       {children}
     </main>

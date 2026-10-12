@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import AppFrame from "@/components/scene/AppFrame"
 import LookPicker from "@/components/ui/LookPicker"
 import Button from "@/components/ui/Button"
@@ -11,7 +11,15 @@ import {
 } from "@/data/avatar"
 import { groupByCode, groups } from "@/data/groups"
 import type { Go } from "@/lib/screen"
+import { fetchGroups, isRemote, publishProfile, type PublicGroup } from "@/lib/sync"
 import { useGame } from "@/state/GameProvider"
+
+const kindLabel: Record<string, string> = {
+  hostel: "Hostel block",
+  class: "Class year",
+  neighborhood: "Neighborhood",
+  team: "Team",
+}
 
 function nicknameError(name: string): string | null {
   const trimmed = name.trim()
@@ -29,6 +37,17 @@ export default function AvatarGroupScreen({ go }: { go: Go }) {
   const [codeOpen, setCodeOpen] = useState(false)
   const [code, setCode] = useState("")
   const [codeError, setCodeError] = useState(false)
+  const [joinError, setJoinError] = useState("")
+  const [busy, setBusy] = useState(false)
+  const [remoteGroups, setRemoteGroups] = useState<PublicGroup[] | null>(null)
+  const remote = isRemote()
+
+  useEffect(() => {
+    if (!remote) return
+    void fetchGroups().then((rows) => {
+      if (rows) setRemoteGroups(rows)
+    })
+  }, [remote])
   const hair = lookById(hairs, state.hairId)
   const outfit = lookById(outfits, state.outfitId)
   const shoe = lookById(shoes, state.shoeId)
@@ -37,14 +56,48 @@ export default function AvatarGroupScreen({ go }: { go: Go }) {
   const ready = nameReady && Boolean(state.groupId)
 
   function chooseCode() {
-    const match = groupByCode(code)
-    if (!match) {
+    const typed = code.trim().toUpperCase()
+    const match = groupByCode(typed)
+    if (match) {
+      dispatch({ type: "setGroup", id: match.id })
+    } else if (remote && /^[A-Z0-9]{4,8}$/.test(typed)) {
+      dispatch({ type: "setGroup", id: `code:${typed}` })
+    } else {
       setCodeError(true)
       return
     }
-    dispatch({ type: "setGroup", id: match.id })
     setCodeOpen(false)
     setCodeError(false)
+  }
+
+  async function finish() {
+    setShowError(true)
+    setJoinError("")
+    if (!ready || busy) return
+    if (!remote) {
+      dispatch({ type: "completeProfile" })
+      go("continue")
+      return
+    }
+    setBusy(true)
+    try {
+      const joined = await publishProfile({
+        nickname: state.avatarName.trim(),
+        hairId: state.hairId,
+        outfitId: state.outfitId,
+        shoeId: state.shoeId,
+        stage: state.stageId,
+        groupId: state.groupId,
+      })
+      if (joined) dispatch({ type: "setGroup", id: joined.id })
+      dispatch({ type: "completeProfile" })
+      go("continue")
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not save your profile."
+      setJoinError(message)
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
@@ -118,22 +171,38 @@ export default function AvatarGroupScreen({ go }: { go: Go }) {
           <section className="look-block">
             <h2>Play for your group</h2>
             <div className="group-list">
-              {groups.map((group) => (
-                <button
-                  className={`group-card ${
-                    state.groupId === group.id ? "is-selected" : ""
-                  }`}
-                  key={group.id}
-                  onClick={() => dispatch({ type: "setGroup", id: group.id })}
-                  type="button"
-                >
-                  <strong>{group.name}</strong>
-                  <span>
-                    {group.kind} · {group.members} members
-                  </span>
-                  <small>{group.rivalry}</small>
-                </button>
-              ))}
+              {remote && remoteGroups
+                ? remoteGroups.map((group) => (
+                    <button
+                      className={`group-card ${
+                        state.groupId === group.id ? "is-selected" : ""
+                      }`}
+                      key={group.id}
+                      onClick={() => dispatch({ type: "setGroup", id: group.id })}
+                      type="button"
+                    >
+                      <strong>{group.name}</strong>
+                      <span>
+                        {kindLabel[group.kind] ?? group.kind} · {group.member_count} members
+                      </span>
+                    </button>
+                  ))
+                : groups.map((group) => (
+                    <button
+                      className={`group-card ${
+                        state.groupId === group.id ? "is-selected" : ""
+                      }`}
+                      key={group.id}
+                      onClick={() => dispatch({ type: "setGroup", id: group.id })}
+                      type="button"
+                    >
+                      <strong>{group.name}</strong>
+                      <span>
+                        {group.kind} · {group.members} members
+                      </span>
+                      <small>{group.rivalry}</small>
+                    </button>
+                  ))}
             </div>
             <button
               className="code-link"
@@ -185,14 +254,12 @@ export default function AvatarGroupScreen({ go }: { go: Go }) {
             className={`button-primary ${ready ? "" : "button-disabled"}`}
             icon="arrow"
             onClick={() => {
-              setShowError(true)
-              if (!ready) return
-              dispatch({ type: "completeProfile" })
-              go("continue")
+              void finish()
             }}
           >
-            LET&apos;S GO
+            {busy ? "SAVING..." : "LET'S GO"}
           </Button>
+          {joinError && <p className="field-error">{joinError}</p>}
         </footer>
       </div>
     </AppFrame>
