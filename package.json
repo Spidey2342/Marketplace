@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "format": "oxfmt"
+    "format": "oxfmt",
+    "compress:character": "node scripts/compress-character.mjs",
+    "character:report": "node scripts/character-report.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",
@@ -18,6 +20,7 @@
     "three": "^0.186.1"
   },
   "devDependencies": {
+    "@gltf-transform/cli": "^4.5.1",
     "@tailwindcss/vite": "^4.0.0",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",

@@ -322,6 +322,97 @@
   background: var(--paper);
 }
 
+.report-sheet {
+  position: fixed;
+  z-index: 40;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  padding: 16px 16px max(16px, env(safe-area-inset-bottom));
+  border-top: 4px solid var(--line);
+  border-radius: 20px 20px 0 0;
+  background: var(--cream);
+}
+
+.report-sheet h2 {
+  margin: 8px 0 4px;
+  font-size: 20px;
+}
+
+.report-target {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.report-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.report-actions .visit-x {
+  flex: 1;
+  min-height: 48px;
+}
+
+.save-banner {
+  position: fixed;
+  z-index: 35;
+  top: max(8px, env(safe-area-inset-top));
+  right: 12px;
+  left: 12px;
+  padding: 12px 14px;
+  border: 3px solid var(--line);
+  border-radius: 16px;
+  background: var(--cream);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.save-banner p {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 0 0 10px;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.save-banner-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.save-banner-actions button {
+  flex: 1;
+  min-height: 48px;
+  border: 3px solid var(--line);
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 900;
+  cursor: pointer;
+  background: var(--paper);
+}
+
+.save-banner-go {
+  background: var(--yellow) !important;
+}
+
+.report-send {
+  display: flex;
+  flex: 1.4;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  border: 3px solid var(--line);
+  border-radius: 14px;
+  background: var(--yellow);
+  font-size: 16px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
 .map-friend {
   position: absolute;
   z-index: 2;

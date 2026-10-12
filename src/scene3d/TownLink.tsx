@@ -18,6 +18,7 @@ import {
 
 type Me = {
   nickname: string
+  tag: number
   hairId: string
   outfitId: string
   shoeId: string
@@ -112,7 +113,8 @@ export default function TownLink({ me }: { me: Me }) {
           const meta = metas[0]
           return {
             id,
-            name: meta?.nickname || "Player",
+            nickname: meta?.nickname || "Player",
+            tag: Number(meta?.tag) || 1000,
             hairId: meta?.hair || "short",
             outfitId: meta?.outfit || "kente",
             shoeId: meta?.shoes || "sandals",
@@ -153,6 +155,7 @@ export default function TownLink({ me }: { me: Me }) {
           const shoe = lookById(shoes, me.shoeId)
           void next.track({
             nickname: me.nickname || "Player",
+            tag: me.tag,
             hair: hair.id,
             outfit: outfit.id,
             shoes: shoe.id,
@@ -167,13 +170,23 @@ export default function TownLink({ me }: { me: Me }) {
         }
       })
     }
-  }, [me.friendsRoom, me.groupId, me.nickname, me.hairId, me.outfitId, me.shoeId, me.stage])
+  }, [
+    me.friendsRoom,
+    me.groupId,
+    me.nickname,
+    me.tag,
+    me.hairId,
+    me.outfitId,
+    me.shoeId,
+    me.stage,
+  ])
 
   return null
 }
 
 type PresenceRow = {
   nickname?: string
+  tag?: number
   hair?: string
   outfit?: string
   shoes?: string
@@ -201,7 +214,8 @@ function readFakeCount(): number {
     const value = new URLSearchParams(window.location.search).get("remotes")
     const count = Number(value)
     if (!Number.isFinite(count)) return 0
-    return Math.max(0, Math.min(6, count))
+    const cap = new URLSearchParams(window.location.search).get("dev") === "1" ? 20 : 6
+    return Math.max(0, Math.min(cap, count))
   } catch {
     return 0
   }
@@ -211,7 +225,8 @@ function seedFakes(count: number) {
   const now = performance.now()
   townLive.ordered = Array.from({ length: count }, (_, index) => ({
     id: `fake-${index}`,
-    name: `Player ${index + 1}`,
+    nickname: index % 3 === 0 ? "Ama" : `Player ${index + 1}`,
+    tag: 4800 + index,
     hair: hairs[index % hairs.length].color,
     hairId: hairs[index % hairs.length].id,
     outfit: outfits[index % outfits.length].color,

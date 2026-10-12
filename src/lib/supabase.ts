@@ -4,7 +4,14 @@ const url = import.meta.env.VITE_SUPABASE_URL?.trim()
 const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim()
 
 export const supabase: SupabaseClient | null =
-  url && anonKey ? createClient(url, anonKey) : null
+  url && anonKey
+    ? createClient(url, anonKey, {
+        auth: {
+          detectSessionInUrl: true,
+          flowType: "pkce",
+        },
+      })
+    : null
 
 export function isRemote(): boolean {
   return supabase !== null

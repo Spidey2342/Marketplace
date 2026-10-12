@@ -4,7 +4,9 @@ import Brand from "@/components/scene/Brand"
 import Button from "@/components/ui/Button"
 import Icon from "@/components/ui/Icon"
 import Pill from "@/components/ui/Pill"
+import SaveProgressPanel from "@/components/ui/SaveProgressPanel"
 import type { Go } from "@/lib/screen"
+import { isRemote } from "@/lib/supabase"
 import { useGame } from "@/state/GameProvider"
 
 export default function HomeScreen({ go }: { go: Go }) {
@@ -12,6 +14,8 @@ export default function HomeScreen({ go }: { go: Go }) {
   const [joining, setJoining] = useState(false)
   const [code, setCode] = useState("")
   const [error, setError] = useState(false)
+  const [accountOpen, setAccountOpen] = useState(false)
+  const remote = isRemote()
 
   function playTown() {
     dispatch({ type: "setFriendsRoom", code: null })
@@ -57,6 +61,15 @@ export default function HomeScreen({ go }: { go: Go }) {
             >
               Continue as guest
             </button>
+            {remote && (
+              <button
+                className="text-button"
+                onClick={() => setAccountOpen(true)}
+                type="button"
+              >
+                I already have an account
+              </button>
+            )}
           </>
         ) : (
           <form
@@ -104,6 +117,11 @@ export default function HomeScreen({ go }: { go: Go }) {
           <span>Safe play · No exact location shared</span>
         </div>
       </section>
+      {accountOpen && (
+        <div className="home-account-sheet">
+          <SaveProgressPanel mode="signin" onClose={() => setAccountOpen(false)} />
+        </div>
+      )}
     </AppFrame>
   )
 }

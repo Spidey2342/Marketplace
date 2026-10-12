@@ -1,7 +1,9 @@
 import { Html } from "@react-three/drei"
 import { useRef } from "react"
 import { useFrame } from "@react-three/fiber"
+import { npcByStall } from "@/data/visits"
 import { neighborStalls, stalls, type StallSlot } from "@/data/townLayout"
+import { formatHandle } from "@/lib/handle"
 import { getNearby, openVisit, setNearby, usePresence } from "@/scene3d/presence"
 import { slotForStall } from "@/scene3d/townLive"
 import { pose, worldView } from "@/scene3d/worldView"
@@ -14,7 +16,7 @@ function guestFor(stall: StallSlot) {
 
 function labelFor(stall: StallSlot): string {
   const guest = guestFor(stall)
-  if (guest) return guest.name
+  if (guest) return formatHandle(guest.nickname, guest.tag)
   if (stall.player) return worldView.stallName
   if (stall.seller) return stall.seller
   return "Quiet stall"
@@ -41,14 +43,22 @@ export default function VisitChips() {
       return
     }
     const guest = guestFor(best)
+    const guestHandle = guest ? formatHandle(guest.nickname, guest.tag) : labelFor(best)
+    const npc = npcByStall(best.id)
+    const guestNick = guest?.nickname ?? npc?.name ?? best.seller ?? "Seller"
     const next = {
       id: best.id,
-      name: guest?.name ?? labelFor(best),
+      handle: guestHandle,
+      nickname: guestNick,
       profileId: guest && !guest.id.startsWith("fake-") ? guest.id : undefined,
       goods: guest?.goods,
     }
     const shown = getNearby()
-    if (shown?.id === next.id && shown.name === next.name && shown.profileId === next.profileId) {
+    if (
+      shown?.id === next.id &&
+      shown.handle === next.handle &&
+      shown.profileId === next.profileId
+    ) {
       return
     }
     setNearby(next)
@@ -72,7 +82,8 @@ export default function VisitChips() {
           const guest = guestFor(stall)
           openVisit({
             id: stall.id,
-            name: guest?.name ?? nearby.name,
+            handle: guest ? formatHandle(guest.nickname, guest.tag) : nearby.handle,
+            nickname: guest?.nickname ?? nearby.nickname,
             profileId: guest && !guest.id.startsWith("fake-") ? guest.id : undefined,
             goods: guest?.goods ?? [],
           })

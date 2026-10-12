@@ -9,6 +9,14 @@
   gap: 8px;
 }
 
+.dev-save-flag {
+  display: block;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--ink);
+}
+
 .dev-jumper > button,
 .dev-menu button {
   min-width: 48px;

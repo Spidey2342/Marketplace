@@ -179,6 +179,26 @@
   color: #ad302b;
 }
 
+.home-account-sheet {
+  position: fixed;
+  z-index: 40;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  max-height: 85svh;
+  padding: 8px 12px max(12px, env(safe-area-inset-bottom));
+  overflow: auto;
+  border-top: 4px solid var(--line);
+  border-radius: 20px 20px 0 0;
+  background: var(--cream);
+}
+
+.home-account-sheet .save-progress-card {
+  margin: 0;
+  border: 0;
+  background: transparent;
+}
+
 .privacy-note {
   display: flex;
   align-items: center;

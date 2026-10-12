@@ -11,6 +11,7 @@ import TownScreen from "@/screens/TownScreen"
 import PassportScreen from "@/screens/PassportScreen"
 import UpgradeScreen from "@/screens/UpgradeScreen"
 import { isRemote } from "@/lib/supabase"
+import AuthBridge from "@/state/AuthBridge"
 import BackendBridge from "@/state/BackendBridge"
 import { useGame } from "@/state/GameProvider"
 
@@ -72,6 +73,7 @@ export default function App() {
   return (
     <>
       <BackendBridge />
+      <AuthBridge />
       {!isRemote() && <p className="offline-banner">Saved on this device</p>}
       {view}
       {dev && (

@@ -4,7 +4,8 @@ import type { StallOffer } from "@/data/visits"
 
 export type RemotePlayer = {
   id: string
-  name: string
+  nickname: string
+  tag: number
   hair: string
   hairId: string
   outfit: string
@@ -94,7 +95,8 @@ export function blockPlayer(id: string) {
 export function syncPresence(
   rows: {
     id: string
-    name: string
+    nickname: string
+    tag: number
     hairId: string
     outfitId: string
     shoeId: string
@@ -111,7 +113,8 @@ export function syncPresence(
     const shoe = lookById(shoes, row.shoeId)
     const existing = byId.get(row.id)
     if (existing) {
-      existing.name = row.name
+      existing.nickname = row.nickname
+      existing.tag = row.tag
       existing.hair = hair.color
       existing.hairId = hair.id
       existing.outfit = outfit.color
@@ -121,7 +124,8 @@ export function syncPresence(
     }
     byId.set(row.id, {
       id: row.id,
-      name: row.name,
+      nickname: row.nickname,
+      tag: row.tag,
       hair: hair.color,
       hairId: hair.id,
       outfit: outfit.color,

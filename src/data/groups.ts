@@ -71,7 +71,7 @@ export const leaderboard: RankedGroup[] = [
 ]
 
 export const groupHustlers = [
-  { name: "Akos", points: 86 },
-  { name: "Yaw", points: 64 },
-  { name: "Esi", points: 41 },
+  { nickname: "Akos", tag: 4821, points: 86 },
+  { nickname: "Yaw", tag: 3190, points: 64 },
+  { nickname: "Esi", tag: 7744, points: 41 },
 ]

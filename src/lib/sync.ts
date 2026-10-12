@@ -3,8 +3,9 @@ import { groupById } from "@/data/groups"
 import { productById } from "@/data/products"
 import { STALL_SYNC_MS, type StallOffer } from "@/data/visits"
 import type { Regular, RoundResult, StallLine } from "@/lib/economy"
-import { stockLeft } from "@/lib/economy"
+import { freshStall, stockLeft } from "@/lib/economy"
 import { isRemote, setSessionUserId, supabase } from "@/lib/supabase"
+import { parseRpcError } from "@/lib/handle"
 import { isoWeekId } from "@/lib/week"
 
 const OUTBOX_KEY = "market-street-outbox"
@@ -26,11 +27,22 @@ export type RankRow = {
   member_count: number
 }
 
+export type HustlerRow = {
+  profile_id: string
+  nickname: string
+  tag: number
+  points: number
+}
+
 export type ServerProfile = {
   nickname: string
+  tag: number
+  nicknameChangedAt: number | null
   hairId: string
   outfitId: string
   shoeId: string
+  skinToneId: string
+  bodyTypeId: string
   groupId: string | null
   coins: number
   reputation: number
@@ -80,28 +92,90 @@ export async function fetchGroups(): Promise<PublicGroup[] | null> {
   return data as PublicGroup[]
 }
 
+export async function commitNickname(nickname: string): Promise<{
+  nickname: string
+  tag: number
+  nicknameChangedAt: number | null
+}> {
+  if (!supabase) throw new Error("Offline")
+  const userId = await ensureSession()
+  if (!userId) throw new Error("Sign-in failed")
+  const { data, error } = await supabase.rpc("set_nickname", {
+    new_nickname: nickname.trim().slice(0, 16),
+  })
+  if (error) throw new Error(parseRpcError(error.message))
+  const row = firstRow<{ nickname: string; tag: number }>(data)
+  if (!row) throw new Error("Could not save your name.")
+  const profile = await supabase
+    .from("profiles")
+    .select("nickname_changed_at")
+    .eq("id", userId)
+    .maybeSingle()
+  const changedAt = profile.data?.nickname_changed_at
+    ? Date.parse(String(profile.data.nickname_changed_at))
+    : null
+  return {
+    nickname: String(row.nickname),
+    tag: Number(row.tag),
+    nicknameChangedAt: Number.isFinite(changedAt) ? changedAt : null,
+  }
+}
+
+export async function updateAvatarLook(input: {
+  hairId: string
+  outfitId: string
+  shoeId: string
+  skinToneId: string
+  bodyTypeId: string
+  stage: string
+}): Promise<void> {
+  if (!supabase) return
+  const userId = await ensureSession()
+  if (!userId) throw new Error("Sign-in failed")
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      avatar: {
+        hair: input.hairId,
+        outfit: input.outfitId,
+        shoes: input.shoeId,
+        skin: input.skinToneId,
+        body: input.bodyTypeId,
+      },
+      stage: input.stage,
+    })
+    .eq("id", userId)
+  if (error) throw error
+}
+
 export async function publishProfile(input: {
   nickname: string
   hairId: string
   outfitId: string
   shoeId: string
+  skinToneId: string
+  bodyTypeId: string
   stage: string
   groupId: string | null
-}): Promise<{ id: string; name: string } | null> {
+}): Promise<{ id: string; name: string; tag: number; nickname: string } | null> {
   if (!supabase) return null
   const userId = await ensureSession()
   if (!userId) throw new Error("Sign-in failed")
-  const { error } = await supabase.from("profiles").upsert({
-    id: userId,
-    nickname: input.nickname.trim().slice(0, 16),
-    avatar: {
-      hair: input.hairId,
-      outfit: input.outfitId,
-      shoes: input.shoeId,
-    },
-    stage: input.stage,
-    badges: [],
-  })
+  const named = await commitNickname(input.nickname)
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      avatar: {
+        hair: input.hairId,
+        outfit: input.outfitId,
+        shoes: input.shoeId,
+        skin: input.skinToneId,
+        body: input.bodyTypeId,
+      },
+      stage: input.stage,
+      badges: [],
+    })
+    .eq("id", userId)
   if (error) throw error
 
   const coded = input.groupId?.startsWith("code:") ? input.groupId.slice(5) : null
@@ -112,32 +186,111 @@ export async function publishProfile(input: {
     })
     if (joinError) throw joinError
     const row = firstRow<{ id: string; name: string }>(data)
-    return row
+    return row ? { ...row, tag: named.tag, nickname: named.nickname } : null
   }
   if (input.groupId && UUID.test(input.groupId)) {
     const { data, error: joinError } = await supabase.rpc("join_public_group", {
       group_id: input.groupId,
     })
     if (joinError) throw joinError
-    return firstRow<{ id: string; name: string }>(data)
+    const row = firstRow<{ id: string; name: string }>(data)
+    return row ? { ...row, tag: named.tag, nickname: named.nickname } : null
   }
-  return null
+  return { id: userId, name: named.nickname, tag: named.tag, nickname: named.nickname }
+}
+
+export type RemoteAccountBundle = ServerProfile & {
+  stall: StallLine[]
+  ownedUpgrades: string[]
+  regulars: Regular[]
+}
+
+function stallFromRemote(items: unknown, leftover: unknown): StallLine[] {
+  const base = freshStall()
+  if (!Array.isArray(items)) return base
+  const carry = (leftover ?? {}) as Record<string, number>
+  return base.map((line) => {
+    const remote = items.find((entry) => {
+      if (!entry || typeof entry !== "object") return false
+      return Number((entry as { productId?: number }).productId) === line.productId
+    }) as
+      | {
+          productId?: number
+          price?: number
+          selected?: boolean
+          stock?: number
+          packs?: number
+        }
+      | undefined
+    if (!remote) return line
+    const stock = Number.isFinite(Number(remote.stock)) ? Number(remote.stock) : 0
+    const sold = Math.max(0, line.opened - stock)
+    return {
+      ...line,
+      price: Number(remote.price) > 0 ? Number(remote.price) : line.price,
+      selected: Boolean(remote.selected),
+      packs: Number.isFinite(Number(remote.packs)) ? Number(remote.packs) : line.packs,
+      carried: carry[String(line.productId)] ?? line.carried,
+      opened: stock + sold,
+      sold,
+    }
+  })
+}
+
+export async function pullRemoteAccount(userId: string): Promise<RemoteAccountBundle | null> {
+  if (!supabase) return null
+  const profile = await loadProfile(userId)
+  if (!profile) return null
+  const { data: stallRow } = await supabase
+    .from("stalls")
+    .select("items, leftover, upgrades, regulars")
+    .eq("profile_id", userId)
+    .maybeSingle()
+  const regulars = Array.isArray(stallRow?.regulars)
+    ? (stallRow.regulars as Regular[]).filter(
+        (row) => row && typeof row.name === "string" && typeof row.productId === "number",
+      )
+    : []
+  const ownedUpgrades = Array.isArray(stallRow?.upgrades)
+    ? stallRow.upgrades.filter((id): id is string => typeof id === "string")
+    : []
+  return {
+    ...profile,
+    stall: stallFromRemote(stallRow?.items, stallRow?.leftover),
+    ownedUpgrades,
+    regulars,
+  }
 }
 
 export async function loadProfile(userId: string): Promise<ServerProfile | null> {
   if (!supabase) return null
   const { data, error } = await supabase
     .from("profiles")
-    .select("nickname, avatar, group_id, coins, reputation, stage")
+    .select("nickname, tag, nickname_changed_at, avatar, group_id, coins, reputation, stage")
     .eq("id", userId)
     .maybeSingle()
   if (error || !data) return null
-  const avatar = (data.avatar ?? {}) as { hair?: string; outfit?: string; shoes?: string }
+  const avatar = (data.avatar ?? {}) as {
+    hair?: string
+    outfit?: string
+    shoes?: string
+    skin?: string
+    body?: string
+  }
+  const changedRaw = data.nickname_changed_at
+  const changedAt =
+    changedRaw != null && String(changedRaw).length > 0
+      ? Date.parse(String(changedRaw))
+      : null
   return {
     nickname: String(data.nickname ?? ""),
+    tag: Number(data.tag) || 0,
+    nicknameChangedAt: Number.isFinite(changedAt) ? changedAt : null,
     hairId: avatar.hair ?? "short",
     outfitId: avatar.outfit ?? "kente",
     shoeId: avatar.shoes ?? "sandals",
+    skinToneId: avatar.skin ?? "caramel",
+    bodyTypeId: avatar.body ?? "medium",
     groupId: data.group_id ? String(data.group_id) : null,
     coins: Number(data.coins) || 0,
     reputation: Number(data.reputation) || 0,
@@ -169,6 +322,20 @@ export async function flushOutbox(): Promise<{ coins: number; reputation: number
   }
   localStorage.setItem(OUTBOX_KEY, JSON.stringify(keep))
   return latest
+}
+
+export async function fetchGroupTopHustlers(): Promise<HustlerRow[] | null> {
+  if (!supabase) return null
+  const { data, error } = await supabase.rpc("get_group_top_hustlers", {
+    p_week_id: isoWeekId(Date.now()),
+  })
+  if (error || !data) return null
+  return (data as HustlerRow[]).map((row) => ({
+    profile_id: String(row.profile_id),
+    nickname: String(row.nickname),
+    tag: Number(row.tag) || 0,
+    points: Number(row.points) || 0,
+  }))
 }
 
 export async function fetchRankings(): Promise<RankRow[] | null> {

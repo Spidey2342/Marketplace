@@ -3,7 +3,10 @@ import type { StallOffer } from "@/data/visits"
 
 export type VisitTarget = {
   id: string
-  name: string
+  /** Full handle for sheets (Nickname#tag). */
+  handle: string
+  /** Nickname only (stall label, sale toasts). */
+  nickname: string
   profileId?: string
   goods?: StallOffer[]
 }
@@ -27,7 +30,7 @@ export function getVisit() {
 export function setNearby(next: VisitTarget | null) {
   if (
     nearby?.id === next?.id &&
-    nearby?.name === next?.name &&
+    nearby?.handle === next?.handle &&
     nearby?.profileId === next?.profileId
   ) {
     return

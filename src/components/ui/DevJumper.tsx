@@ -1,6 +1,9 @@
 import { useState } from "react"
 import { roundEvents, type ChoiceKind, type EventId } from "@/data/events"
+import { requireSavedAccount } from "@/lib/account"
+import { isRemote } from "@/lib/supabase"
 import type { Screen } from "@/lib/screen"
+import { useAuth } from "@/state/AuthProvider"
 
 const screens: { id: Screen; label: string }[] = [
   { id: "home", label: "Home" },
@@ -23,11 +26,14 @@ export default function DevJumper({
   onChoice: (kind: ChoiceKind) => void
 }) {
   const [open, setOpen] = useState(false)
+  const { user } = useAuth()
+  const saved = isRemote() && requireSavedAccount(user)
 
   return (
     <div className="dev-jumper">
       {open && (
         <div className="dev-menu">
+          <span className="dev-save-flag">Saved account: {saved ? "yes" : "no"}</span>
           {roundEvents.map((event) => (
             <button
               key={event.id}

@@ -47,7 +47,7 @@ export default function VisitSheet({
           stock: line.units,
         }
       })
-  const sellerName = remote ? visit.name : npc?.name ?? visit.name
+  const sellerName = remote ? visit.handle : npc?.name ?? visit.nickname
   const group = npc?.group ?? (remote ? "In the town" : "Your group")
   const stage = npc?.stage ?? "Stall"
   const reputation = npc?.reputation ?? null

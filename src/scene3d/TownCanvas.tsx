@@ -24,6 +24,12 @@ import Sellers from "@/scene3d/Sellers"
 import VisitChips from "@/scene3d/VisitChips"
 import Weather from "@/scene3d/Weather"
 import type { EventId } from "@/data/events"
+import { useRiggedCharacters } from "@/scene3d/characters/flags"
+import { preloadBodyModels } from "@/scene3d/characters/characterLoader"
+
+if (useRiggedCharacters()) {
+  preloadBodyModels()
+}
 
 const start = playerSpawn()
 

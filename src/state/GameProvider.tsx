@@ -7,7 +7,7 @@ import {
   type Dispatch,
   type ReactNode,
 } from "react"
-import { hairs, outfits, shoes } from "@/data/avatar"
+import { bodyTypes, hairs, outfits, shoes, skinTones } from "@/data/avatar"
 import { groups } from "@/data/groups"
 import { currentChallenge, NOTE_MAX, weekId } from "@/data/challenges"
 import {
@@ -79,6 +79,7 @@ import {
 import { sampleResult } from "@/lib/sample"
 import type { Screen } from "@/lib/screen"
 import { playerSpawn } from "@/data/townLayout"
+import { randomTag } from "@/lib/handle"
 import { isUuid } from "@/lib/sync"
 
 export type ProofChoice = "none" | "photo" | "receipt" | "note" | "pending"
@@ -94,9 +95,13 @@ export type SaleToast = {
 export type GameState = {
   coins: number
   avatarName: string
+  avatarTag: number | null
+  nicknameChangedAt: number | null
   hairId: string
   outfitId: string
   shoeId: string
+  skinToneId: string
+  bodyTypeId: string
   profileComplete: boolean
   groupId: string | null
   stall: StallLine[]
@@ -186,9 +191,17 @@ type Action =
   | { type: "endRound"; now: number }
   | { type: "acknowledgeResults" }
   | { type: "setAvatarName"; name: string }
+  | {
+      type: "applyNickname"
+      nickname: string
+      tag: number
+      nicknameChangedAt: number | null
+    }
   | { type: "setHair"; id: string }
   | { type: "setOutfit"; id: string }
   | { type: "setShoes"; id: string }
+  | { type: "setSkinTone"; id: string }
+  | { type: "setBodyType"; id: string }
   | { type: "setGroup"; id: string }
   | { type: "setFriendsRoom"; code: string | null }
   | { type: "setSyncNote"; note: string | null }
@@ -196,15 +209,38 @@ type Action =
   | {
       type: "hydrateProfile"
       nickname: string
+      tag: number
+      nicknameChangedAt: number | null
       hairId: string
       outfitId: string
       shoeId: string
+      skinToneId: string
+      bodyTypeId: string
       groupId: string | null
       coins: number
       reputation: number
       stage: string
     }
   | { type: "completeProfile" }
+  | {
+      type: "applyRemoteAccount"
+      nickname: string
+      tag: number
+      nicknameChangedAt: number | null
+      hairId: string
+      outfitId: string
+      shoeId: string
+      skinToneId: string
+      bodyTypeId: string
+      groupId: string | null
+      coins: number
+      reputation: number
+      stage: string
+      stall: StallLine[]
+      ownedUpgrades: string[]
+      regulars: Regular[]
+    }
+  | { type: "beginFreshGuest" }
   | { type: "buyStage" }
   | { type: "buyUpgrade"; id: string }
   | { type: "applySample"; screen: Screen }
@@ -273,9 +309,13 @@ function freshState(): GameState {
   return {
     coins: STARTING_COINS,
     avatarName: "",
+    avatarTag: null,
+    nicknameChangedAt: null,
     hairId: hairs[0].id,
     outfitId: outfits[0].id,
     shoeId: shoes[0].id,
+    skinToneId: skinTones[3].id,
+    bodyTypeId: bodyTypes[1].id,
     profileComplete: false,
     groupId: null,
     stall: freshStall(),
@@ -536,6 +576,16 @@ function loadState(): GameState {
         typeof parsed.avatarName === "string"
           ? parsed.avatarName.slice(0, 16)
           : blank.avatarName,
+      avatarTag:
+        typeof parsed.avatarTag === "number" &&
+        parsed.avatarTag >= 1000 &&
+        parsed.avatarTag <= 9999
+          ? Math.trunc(parsed.avatarTag)
+          : blank.avatarTag,
+      nicknameChangedAt:
+        typeof parsed.nicknameChangedAt === "number"
+          ? parsed.nicknameChangedAt
+          : blank.nicknameChangedAt,
       hairId: hairs.some((item) => item.id === parsed.hairId)
         ? String(parsed.hairId)
         : blank.hairId,
@@ -545,6 +595,12 @@ function loadState(): GameState {
       shoeId: shoes.some((item) => item.id === parsed.shoeId)
         ? String(parsed.shoeId)
         : blank.shoeId,
+      skinToneId: skinTones.some((item) => item.id === parsed.skinToneId)
+        ? String(parsed.skinToneId)
+        : blank.skinToneId,
+      bodyTypeId: bodyTypes.some((item) => item.id === parsed.bodyTypeId)
+        ? String(parsed.bodyTypeId)
+        : blank.bodyTypeId,
       profileComplete: Boolean(parsed.profileComplete),
       groupId:
         typeof parsed.groupId === "string" && knownGroup(parsed.groupId)
@@ -1325,6 +1381,13 @@ function reducer(state: GameState, action: Action): GameState {
       return { ...state, [action.field]: action.value.slice(0, NOTE_MAX) }
     case "setAvatarName":
       return { ...state, avatarName: action.name.slice(0, 16) }
+    case "applyNickname":
+      return {
+        ...state,
+        avatarName: action.nickname.slice(0, 16),
+        avatarTag: action.tag,
+        nicknameChangedAt: action.nicknameChangedAt,
+      }
     case "setHair":
       return hairs.some((item) => item.id === action.id)
         ? { ...state, hairId: action.id }
@@ -1336,6 +1399,14 @@ function reducer(state: GameState, action: Action): GameState {
     case "setShoes":
       return shoes.some((item) => item.id === action.id)
         ? { ...state, shoeId: action.id }
+        : state
+    case "setSkinTone":
+      return skinTones.some((item) => item.id === action.id)
+        ? { ...state, skinToneId: action.id }
+        : state
+    case "setBodyType":
+      return bodyTypes.some((item) => item.id === action.id)
+        ? { ...state, bodyTypeId: action.id }
         : state
     case "setGroup":
       return knownGroup(action.id) ? { ...state, groupId: action.id } : state
@@ -1359,11 +1430,19 @@ function reducer(state: GameState, action: Action): GameState {
       return {
         ...state,
         avatarName: action.nickname.slice(0, 16),
+        avatarTag: action.tag >= 1000 && action.tag <= 9999 ? action.tag : state.avatarTag,
+        nicknameChangedAt: action.nicknameChangedAt,
         hairId: hairs.some((item) => item.id === action.hairId) ? action.hairId : state.hairId,
         outfitId: outfits.some((item) => item.id === action.outfitId)
           ? action.outfitId
           : state.outfitId,
         shoeId: shoes.some((item) => item.id === action.shoeId) ? action.shoeId : state.shoeId,
+        skinToneId: skinTones.some((item) => item.id === action.skinToneId)
+          ? action.skinToneId
+          : state.skinToneId,
+        bodyTypeId: bodyTypes.some((item) => item.id === action.bodyTypeId)
+          ? action.bodyTypeId
+          : state.bodyTypeId,
         groupId: action.groupId && knownGroup(action.groupId) ? action.groupId : state.groupId,
         stageId: isStageId(action.stage) ? action.stage : state.stageId,
         profileComplete: action.nickname.trim().length >= 2,
@@ -1372,7 +1451,51 @@ function reducer(state: GameState, action: Action): GameState {
       }
     }
     case "completeProfile":
-      return { ...state, profileComplete: true }
+      return {
+        ...state,
+        profileComplete: true,
+        avatarTag:
+          state.avatarTag != null && state.avatarTag >= 1000 && state.avatarTag <= 9999
+            ? state.avatarTag
+            : randomTag(),
+      }
+    case "applyRemoteAccount": {
+      if (state.roundStatus === "running") return state
+      const stageId = isStageId(action.stage) ? action.stage : state.stageId
+      return {
+        ...state,
+        avatarName: action.nickname.slice(0, 16),
+        avatarTag: action.tag >= 1000 && action.tag <= 9999 ? action.tag : state.avatarTag,
+        nicknameChangedAt: action.nicknameChangedAt,
+        hairId: hairs.some((item) => item.id === action.hairId) ? action.hairId : state.hairId,
+        outfitId: outfits.some((item) => item.id === action.outfitId)
+          ? action.outfitId
+          : state.outfitId,
+        shoeId: shoes.some((item) => item.id === action.shoeId) ? action.shoeId : state.shoeId,
+        skinToneId: skinTones.some((item) => item.id === action.skinToneId)
+          ? action.skinToneId
+          : state.skinToneId,
+        bodyTypeId: bodyTypes.some((item) => item.id === action.bodyTypeId)
+          ? action.bodyTypeId
+          : state.bodyTypeId,
+        groupId: action.groupId && knownGroup(action.groupId) ? action.groupId : state.groupId,
+        stageId,
+        profileComplete: action.nickname.trim().length >= 2,
+        coins: Math.max(0, action.coins),
+        reputation: Math.max(0, action.reputation),
+        stall: clampSelection(action.stall, stageId),
+        ownedUpgrades: action.ownedUpgrades.filter((id) =>
+          quickUpgrades.some((item) => item.id === id),
+        ),
+        regulars: action.regulars,
+        syncNote: null,
+      }
+    }
+    case "beginFreshGuest":
+      return {
+        ...freshState(),
+        coachSeen: state.coachSeen,
+      }
     case "buyStage": {
       const upcoming = nextStage(state.stageId)
       if (!upcoming || !upcoming.purchasable || state.coins < upcoming.cost) {
@@ -1462,6 +1585,8 @@ export default function GameProvider({ children }: { children: ReactNode }) {
     state.hairId,
     state.outfitId,
     state.shoeId,
+    state.skinToneId,
+    state.bodyTypeId,
     state.profileComplete,
     state.groupId,
     state.friendsRoom,

@@ -3,6 +3,8 @@ import { useFrame, useThree } from "@react-three/fiber"
 import * as THREE from "three"
 import { colliders, playerSpawn } from "@/data/townLayout"
 import { slide } from "@/scene3d/collide"
+import { useRiggedCharacters } from "@/scene3d/characters/flags"
+import PlayerRigged from "@/scene3d/PlayerRigged"
 import PlayerAvatar from "@/scene3d/PlayerAvatar"
 import PlayerBubble from "@/scene3d/PlayerBubble"
 import { sendMove } from "@/scene3d/TownLink"
@@ -38,7 +40,7 @@ function paintMesh(mesh: THREE.Mesh | undefined, hex: string) {
   material.userData.hex = hex
 }
 
-export default function Player() {
+function PlayerPrimitive() {
   const group = useRef<THREE.Group>(null)
   const parts = useRef<Parts | null>(null)
   const camera = useThree((state) => state.camera)
@@ -196,4 +198,8 @@ export default function Player() {
       <PlayerBubble />
     </group>
   )
+}
+
+export default function Player() {
+  return useRiggedCharacters() ? <PlayerRigged /> : <PlayerPrimitive />
 }

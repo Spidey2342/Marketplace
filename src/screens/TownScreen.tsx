@@ -16,14 +16,19 @@ import SaleToasts from "@/components/ui/SaleToasts"
 import SetupScreen from "@/screens/SetupScreen"
 import StallStatus from "@/components/ui/StallStatus"
 import TownMenu from "@/components/ui/TownMenu"
+import ReportSheet from "@/components/ui/ReportSheet"
 import VisitSheet from "@/components/ui/VisitSheet"
-import { closeVisit, usePresence } from "@/scene3d/presence"
+import { closeVisit, usePresence, type VisitTarget } from "@/scene3d/presence"
 import { sendChat, sendEmote } from "@/scene3d/TownLink"
 import TownLink from "@/scene3d/TownLink"
 import { blockPlayer } from "@/scene3d/townLive"
 import { sendReport } from "@/lib/sync"
 import { isDev, setTier, useTier } from "@/scene3d/tier"
 import { requestGlideHome } from "@/state/input"
+import SaveProgressBanner from "@/components/ui/SaveProgressBanner"
+import { shouldShowSaveBanner } from "@/lib/account"
+import { isRemote } from "@/lib/supabase"
+import { useAuth } from "@/state/AuthProvider"
 import { useGame } from "@/state/GameProvider"
 
 const TownCanvas = lazy(() => import("@/scene3d/TownCanvas"))
@@ -59,6 +64,10 @@ export default function TownScreen({
   onSheet: (sheet: "stock" | "status" | null) => void
 }) {
   const { state, dispatch } = useGame()
+  const { user } = useAuth()
+  const [bannerHidden, setBannerHidden] = useState(false)
+  const showSaveBanner =
+    isRemote() && !bannerHidden && shouldShowSaveBanner(state, user)
   const [now, setNow] = useState(() => Date.now())
   const [chatOpen, setChatOpen] = useState(false)
   const [eventOpen, setEventOpen] = useState(false)
@@ -70,6 +79,7 @@ export default function TownScreen({
   const [devTools] = useState(isDev)
   const tier = useTier()
   const { visit } = usePresence()
+  const [reportVisit, setReportVisit] = useState<VisitTarget | null>(null)
   const onFail = useCallback(() => setCanvasFailed(true), [])
   const openItems = state.stall.filter((line) => line.selected).length
   const showSale =
@@ -123,11 +133,18 @@ export default function TownScreen({
 
   return (
     <AppFrame className="town-screen" showBackdrop={false}>
+      {showSaveBanner && (
+        <SaveProgressBanner
+          onDismiss={() => setBannerHidden(true)}
+          onSave={() => go("avatar")}
+        />
+      )}
       {webgl && !canvasFailed ? (
         <Suspense fallback={<MarketBackdrop active />}>
           <TownLink
             me={{
               nickname: state.avatarName,
+              tag: state.avatarTag ?? 1000,
               hairId: state.hairId,
               outfitId: state.outfitId,
               shoeId: state.shoeId,
@@ -334,18 +351,34 @@ export default function TownScreen({
           onReport={
             visit.profileId
               ? () => {
-                  const now = performance.now()
-                  if (now - lastReportAt < 10000) return
-                  lastReportAt = now
-                  const target = visit.profileId
-                  if (!target) return
-                  blockPlayer(target)
-                  void sendReport(target, "Reported from their stall")
-                  closeVisit()
+                  setReportVisit(visit)
                 }
               : undefined
           }
           visit={visit}
+        />
+      )}
+
+      {reportVisit?.profileId && (
+        <ReportSheet
+          handle={reportVisit.handle}
+          onCancel={() => setReportVisit(null)}
+          onConfirm={() => {
+            const now = performance.now()
+            if (now - lastReportAt < 10000) {
+              setReportVisit(null)
+              closeVisit()
+              return
+            }
+            lastReportAt = now
+            const target = reportVisit.profileId
+            if (target) {
+              blockPlayer(target)
+              void sendReport(target, "Reported from their stall")
+            }
+            setReportVisit(null)
+            closeVisit()
+          }}
         />
       )}
 

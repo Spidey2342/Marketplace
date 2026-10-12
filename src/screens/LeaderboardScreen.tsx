@@ -4,10 +4,11 @@ import Icon from "@/components/ui/Icon"
 import Pill from "@/components/ui/Pill"
 import TopBar from "@/components/ui/TopBar"
 import { groupHustlers, leaderboard } from "@/data/groups"
+import { formatHandle } from "@/lib/handle"
 import { playerWeekPoints, timeUntilSunday } from "@/lib/economy"
 import type { Go } from "@/lib/screen"
 import { useEffect, useState } from "react"
-import { fetchRankings, isRemote, type RankRow } from "@/lib/sync"
+import { fetchGroupTopHustlers, fetchRankings, isRemote, type HustlerRow, type RankRow } from "@/lib/sync"
 import { useGame } from "@/state/GameProvider"
 
 export default function LeaderboardScreen({ go }: { go: Go }) {
@@ -15,6 +16,7 @@ export default function LeaderboardScreen({ go }: { go: Go }) {
   const left = timeUntilSunday(Date.now())
   const remote = isRemote()
   const [live, setLive] = useState<RankRow[] | null>(null)
+  const [hustlers, setHustlers] = useState<HustlerRow[] | null>(null)
   const [missed, setMissed] = useState(false)
 
   useEffect(() => {
@@ -22,6 +24,9 @@ export default function LeaderboardScreen({ go }: { go: Go }) {
     void fetchRankings().then((rows) => {
       if (rows) setLive(rows)
       else setMissed(true)
+    })
+    void fetchGroupTopHustlers().then((rows) => {
+      if (rows) setHustlers(rows)
     })
   }, [remote])
 
@@ -38,6 +43,15 @@ export default function LeaderboardScreen({ go }: { go: Go }) {
         .map((row, index) => ({ ...row, rank: index + 1 }))
   const mine = rows.find((row) => row.id === state.groupId) ?? null
   const added = playerWeekPoints(state.weekContribution, state.challengesCompleted)
+  const myHandle = formatHandle(state.avatarName, state.avatarTag)
+  const topHustlers = remote
+    ? (hustlers ?? [])
+    : groupHustlers.map((row) => ({
+        profile_id: row.nickname,
+        nickname: row.nickname,
+        tag: row.tag,
+        points: row.points,
+      }))
 
   return (
     <AppFrame className="leaderboard-screen">
@@ -90,18 +104,22 @@ export default function LeaderboardScreen({ go }: { go: Go }) {
             ))}
           </ol>
 
-          {!remote && (
           <section className="hustle-card">
             <h2>Top hustlers in your group</h2>
-            {groupHustlers.map((player, index) => (
-              <div className="hustle-row" key={player.name}>
+            {state.profileComplete && myHandle && (
+              <p className="field-help">You play as {myHandle}</p>
+            )}
+            {topHustlers.length === 0 && remote && (
+              <p className="field-help">Hustlers show up when your group earns points this week.</p>
+            )}
+            {topHustlers.map((player, index) => (
+              <div className="hustle-row" key={player.profile_id}>
                 <span>{index + 1}</span>
-                <strong>{player.name}</strong>
+                <strong>{formatHandle(player.nickname, player.tag)}</strong>
                 <em>{player.points} pts</em>
               </div>
             ))}
           </section>
-          )}
         </div>
         <footer className="sticky-action">
           <Button className="button-primary" onClick={() => go("back")}>
@@ -118,15 +136,14 @@ function Move({ places }: { places: number }) {
     <span
       aria-label={
         places > 0
-          ? `Up ${places}`
+          ? `Up ${places} places`
           : places < 0
-            ? `Down ${Math.abs(places)}`
+            ? `Down ${Math.abs(places)} places`
             : "No change"
       }
-      className={`move ${places > 0 ? "up" : places < 0 ? "down" : "flat"}`}
+      className={`rank-move ${places > 0 ? "up" : places < 0 ? "down" : "flat"}`}
     >
-      {places !== 0 && <i />}
-      {Math.abs(places)}
+      {places > 0 ? `▲${places}` : places < 0 ? `▼${Math.abs(places)}` : "—"}
     </span>
   )
 }

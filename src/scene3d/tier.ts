@@ -27,6 +27,12 @@ export function customerLimit(): number {
   return tier === "low" ? 4 : 8
 }
 
+export function characterAnimBudget(): number {
+  if (tier === "low") return 6
+  if (tier === "medium") return 12
+  return 20
+}
+
 export function tierDpr(): number {
   if (tier === "low") return 1
   if (tier === "medium") return 1.25
